@@ -156,13 +156,16 @@
             border-radius: 20px;
             border: 1px solid var(--card-border);
             margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
         }
 
         .multiplier-val {
             font-size: 54px; font-weight: 900;
             color: var(--color-red);
             text-shadow: 0 0 20px rgba(255,61,87,0.4);
-            transition: color 0.15s, text-shadow 0.15s;
+            transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.1s ease;
+            will-change: transform, color;
         }
 
         .history-capsules {
@@ -175,6 +178,7 @@
             padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;
             background: var(--card-bg); border: 1px solid var(--card-border);
             white-space: nowrap;
+            transition: all 0.2s ease;
         }
         .capsule.red { color: var(--color-red); border-color: rgba(255,61,87,0.3); }
         .capsule.green { color: var(--color-green); border-color: rgba(0,230,118,0.3); }
@@ -221,7 +225,7 @@
             width: 100%;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
-            transition: transform 0.1s, background-color 0.2s;
+            transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
         }
         .btn-main-action:active { transform: scale(0.98); }
 
@@ -396,7 +400,7 @@
         }
     });
 
-    // Функция определения класса цвета и стиля по иксу
+    // Определение цвета по иксу
     function getColorStyle(val) {
         if (val < 1.19) {
             return { class: 'red', color: 'var(--color-red)', shadow: '0 0 20px rgba(255,61,87,0.4)' };
@@ -441,12 +445,7 @@
         mainBtn.style.backgroundColor = '#FF9800';
         mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
 
-        // БАЛАНСИРОВАННАЯ МАТЕМАТИКА (Интересно играть):
-        // 15% — мгновенный слив (1.01 - 1.18)
-        // 40% — нормальный выигрыш (1.19 - 2.00)
-        // 25% — средний икс (2.00 - 3.50)
-        // 15% — хороший икс (3.50 - 7.50)
-        // 5%  — джекпот (7.50 - 25.00)
+        // Генерация точки взрыва
         let rand = Math.random();
         if (rand < 0.15) {
             crashPoint = (1.01 + Math.random() * 0.17).toFixed(2);
@@ -460,17 +459,21 @@
             crashPoint = (7.50 + Math.random() * 17.50).toFixed(2);
         }
 
-        // Подкрашиваем стартовый 1.00x в Красный
         let initialStyle = getColorStyle(1.00);
         multiplierEl.style.color = initialStyle.color;
         multiplierEl.style.textShadow = initialStyle.shadow;
 
-        // Полет ракеты
+        // ПЛАВНЫЙ И ЗАМЕДЛЕННЫЙ ПОЛЕТ (60 FPS: каждые 16мс)
         gameInterval = setInterval(() => {
-            currentMultiplier += 0.03;
+            // Меньший шаг при приросте = более плавный и медленный рост
+            currentMultiplier += 0.008;
             multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
 
-            // Динамическая смена цвета по ходу роста икса
+            // Динамический эффект пульсации при росте
+            let scaleVal = 1 + (currentMultiplier % 0.1) * 0.2;
+            multiplierEl.style.transform = `scale(${scaleVal})`;
+
+            // Обновление цвета
             let style = getColorStyle(currentMultiplier);
             multiplierEl.style.color = style.color;
             multiplierEl.style.textShadow = style.shadow;
@@ -478,7 +481,7 @@
             if (currentMultiplier >= crashPoint) {
                 crashGame();
             }
-        }, 35);
+        }, 16); // 16мс = ~60 FPS
     }
 
     function claimWin() {
@@ -498,6 +501,7 @@
         let style = getColorStyle(currentMultiplier);
         addHistoryItem(winX + 'x', style.class);
 
+        multiplierEl.style.transform = 'scale(1)';
         multiplierEl.innerText = 'ВЫИГРЫШ!';
         multiplierEl.style.color = 'var(--color-green)';
         multiplierEl.style.textShadow = '0 0 25px rgba(0,230,118,0.6)';
@@ -517,6 +521,7 @@
         playerBetStatus.innerText = `0.00 TON (${crashX})`;
         playerBetStatus.style.color = 'var(--color-red)';
 
+        multiplierEl.style.transform = 'scale(1)';
         multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
         multiplierEl.style.color = 'var(--color-red)';
         multiplierEl.style.textShadow = '0 0 25px rgba(255,61,87,0.6)';
