@@ -3,71 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Краш Игра</title>
-    <!-- Подключаем клиентскую библиотеку Socket.IO -->
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <!-- Подключаем Telegram Web App SDK -->
+    <title>Speedgift - Ракета</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #0f172a;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
+            overflow: hidden;
         }
-        #status {
-            font-size: 18px;
-            margin-bottom: 20px;
-            color: #ffa726;
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
         }
-        #multiplier {
+        .multiplier {
             font-size: 48px;
             font-weight: bold;
+            margin-bottom: 20px;
+            color: #38bdf8;
+        }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        button.cashout {
+            background: #eab308;
         }
     </style>
 </head>
 <body>
-
-    <div id="status">Подключение к серверу...</div>
-    <div id="multiplier">1.00x</div>
+    <div class="container">
+        <h2>Rocket Game</h2>
+        <div class="multiplier" id="multiplier">1.00x</div>
+        <div id="status">Ожидание раунда...</div>
+        <button id="actionBtn">Сделать ставку</button>
+    </div>
 
     <script>
-        // Сообщаем Telegram, что Web App готов
-        window.Telegram.WebApp.ready();
-        window.Telegram.WebApp.expand();
+        // Подключение к твоему серверу через актуальный туннель
+        const SERVER_URL = 'https://every-readers-care.loca.lt';
+        
+        const multiplierElem = document.getElementById('multiplier');
+        const statusElem = document.getElementById('status');
+        const actionBtn = document.getElementById('actionBtn');
 
-        // Подключаемся к туннелю LocalTunnel
-        const socket = io('https://wild-parts-give.loca.lt', {
-            transports: ['websocket', 'polling']
-        });
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-        const statusEl = document.getElementById('status');
-        const multiplierEl = document.getElementById('multiplier');
-
-        socket.on('connect', () => {
-            statusEl.innerText = '🟢 Соединение установлено!';
-            statusEl.style.color = '#4caf50';
-        });
-
-        socket.on('disconnect', () => {
-            statusEl.innerText = '🔴 Связь с сервером потеряна';
-            statusEl.style.color = '#f44336';
-        });
-
-        // Слушаем обновления коэффициента от сервера
-        socket.on('tick', (data) => {
-            multiplierEl.innerText = data.multiplier.toFixed(2) + 'x';
-        });
-
-        // Слушаем событие краша
-        socket.on('crash', (data) => {
-            multiplierEl.innerText = 'CRASH! (' + data.finalMultiplier.toFixed(2) + 'x)';
-            multiplierEl.style.color = '#f44336';
+        actionBtn.addEventListener('click', () => {
+            fetch(`${SERVER_URL}/api/action`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: tg.initDataUnsafe?.user?.id || 'test_user' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('Ответ сервера:', data);
+            })
+            .catch(err => {
+                console.error('Ошибка соединения с сервером:', err);
+                statusElem.innerText = 'Ошибка связи с сервером';
+            });
         });
     </script>
 </body>
