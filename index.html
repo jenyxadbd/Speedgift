@@ -160,6 +160,16 @@
             overflow: hidden;
         }
 
+        .status-badge {
+            position: absolute;
+            top: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-sub);
+        }
+
         .multiplier-val {
             font-size: 54px; font-weight: 900;
             color: var(--color-red);
@@ -228,6 +238,7 @@
             transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
         }
         .btn-main-action:active { transform: scale(0.98); }
+        .btn-main-action:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Игроки внизу */
         .players-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
@@ -299,6 +310,7 @@
         </div>
 
         <div class="rocket-display">
+            <div class="status-badge" id="statusBadge">• ПОДГОТОВКА</div>
             <div class="multiplier-val" id="multiplier">1.00x</div>
         </div>
 
@@ -317,7 +329,7 @@
                     <div style="width:24px; height:24px; background:#222; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:11px;" id="playerIcon">J</div>
                     <b id="playerName">@jenyxa</b>
                 </div>
-                <span style="color:var(--text-sub); font-weight:bold;" id="playerBetStatus">Ожидание ставки</span>
+                <span style="color:var(--text-sub); font-weight:bold;" id="playerBetStatus">Наблюдатель</span>
             </div>
         </div>
     </div>
@@ -377,11 +389,17 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    // Переменные состояния
+    // Состояние приложения
     let userBalance = 12.50;
     let currentMultiplier = 1.00;
     let gameInterval = null;
-    let isGameRunning = false;
+    let countdownInterval = null;
+    
+    let isRocketFlying = false;  // Летит ли ракета
+    let isCountdown = false;     // Идет ли обратный отсчет
+    let isUserInBet = false;     // Сделал ли юзер ставку
+    let hasClaimed = false;      // Забрал ли выигрыш
+    
     let crashPoint = 0;
     let activeBet = 0.50;
 
@@ -391,16 +409,16 @@
     const balanceEl = document.getElementById('balance');
     const betInput = document.getElementById('betAmount');
     const playerBetStatus = document.getElementById('playerBetStatus');
+    const statusBadge = document.getElementById('statusBadge');
 
     mainBtn.addEventListener('click', () => {
-        if (!isGameRunning) {
-            startGame();
-        } else {
+        if (!isUserInBet) {
+            placeBet();
+        } else if (!hasClaimed && isRocketFlying) {
             claimWin();
         }
     });
 
-    // Определение цвета по иксу
     function getColorStyle(val) {
         if (val < 1.19) {
             return { class: 'red', color: 'var(--color-red)', shadow: '0 0 20px rgba(255,61,87,0.4)' };
@@ -415,7 +433,8 @@
         }
     }
 
-    function startGame() {
+    // Оформление ставки
+    function placeBet() {
         let betValue = parseFloat(betInput.value);
         if (isNaN(betValue) || betValue < 0.10) {
             alert('Минимальная ставка — 0.10 TON');
@@ -434,18 +453,73 @@
         userBalance -= activeBet;
         balanceEl.innerText = userBalance.toFixed(2);
 
-        isGameRunning = true;
-        currentMultiplier = 1.00;
+        isUserInBet = true;
+        hasClaimed = false;
         betInput.disabled = true;
 
         playerBetStatus.innerText = `В игре: ${activeBet.toFixed(2)} TON`;
         playerBetStatus.style.color = 'var(--color-gold)';
 
-        mainBtn.innerText = 'Забрать';
-        mainBtn.style.backgroundColor = '#FF9800';
-        mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
+        if (isCountdown) {
+            mainBtn.innerText = 'Ставка принята! Ожидание...';
+            mainBtn.disabled = true;
+        } else if (isRocketFlying) {
+            updateClaimBtnText();
+        }
+    }
 
-        // Генерация точки взрыва
+    function updateClaimBtnText() {
+        if (isUserInBet && !hasClaimed && isRocketFlying) {
+            mainBtn.disabled = false;
+            let currentWin = (activeBet * currentMultiplier).toFixed(2);
+            mainBtn.innerText = `Забрать ${currentWin} TON`;
+            mainBtn.style.backgroundColor = '#FF9800';
+            mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
+        }
+    }
+
+    // 1. Запуск обратного отсчета (5 секунд)
+    function startCountdown() {
+        isCountdown = true;
+        isRocketFlying = false;
+        currentMultiplier = 1.00;
+
+        multiplierEl.innerText = '1.00x';
+        multiplierEl.style.transform = 'scale(1)';
+        let resetStyle = getColorStyle(1.00);
+        multiplierEl.style.color = resetStyle.color;
+        multiplierEl.style.textShadow = resetStyle.shadow;
+
+        let timeLeft = 5;
+        statusBadge.innerText = `• СТАРТ ЧЕРЕЗ ${timeLeft}с`;
+        statusBadge.style.color = 'var(--color-gold)';
+
+        if (!isUserInBet) {
+            resetMainBtn();
+            betInput.disabled = false;
+            playerBetStatus.innerText = 'Наблюдатель';
+            playerBetStatus.style.color = 'var(--text-sub)';
+        }
+
+        countdownInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                statusBadge.innerText = `• СТАРТ ЧЕРЕЗ ${timeLeft}с`;
+            } else {
+                clearInterval(countdownInterval);
+                isCountdown = false;
+                startRocketFlight(); // Запускаем полет
+            }
+        }, 1000);
+    }
+
+    // 2. Запуск полета ракеты
+    function startRocketFlight() {
+        isRocketFlying = true;
+        statusBadge.innerText = '• ПОЛЕТ';
+        statusBadge.style.color = 'var(--color-green)';
+
+        // Генерация точки падения
         let rand = Math.random();
         if (rand < 0.15) {
             crashPoint = (1.01 + Math.random() * 0.17).toFixed(2);
@@ -459,36 +533,36 @@
             crashPoint = (7.50 + Math.random() * 17.50).toFixed(2);
         }
 
-        let initialStyle = getColorStyle(1.00);
-        multiplierEl.style.color = initialStyle.color;
-        multiplierEl.style.textShadow = initialStyle.shadow;
+        if (isUserInBet && !hasClaimed) {
+            updateClaimBtnText();
+        } else if (!isUserInBet) {
+            resetMainBtn();
+        }
 
-        // ПЛАВНЫЙ И ЗАМЕДЛЕННЫЙ ПОЛЕТ (60 FPS: каждые 16мс)
+        // Плавный полет (60 FPS)
         gameInterval = setInterval(() => {
-            // Меньший шаг при приросте = более плавный и медленный рост
-            currentMultiplier += 0.008;
+            currentMultiplier += 0.008; // Медленный плавный рост
             multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
 
-            // Динамический эффект пульсации при росте
-            let scaleVal = 1 + (currentMultiplier % 0.1) * 0.2;
+            let scaleVal = 1 + (currentMultiplier % 0.1) * 0.15;
             multiplierEl.style.transform = `scale(${scaleVal})`;
 
-            // Обновление цвета
             let style = getColorStyle(currentMultiplier);
             multiplierEl.style.color = style.color;
             multiplierEl.style.textShadow = style.shadow;
 
-            if (currentMultiplier >= crashPoint) {
-                crashGame();
+            if (isUserInBet && !hasClaimed) {
+                updateClaimBtnText();
             }
-        }, 16); // 16мс = ~60 FPS
+
+            if (currentMultiplier >= crashPoint) {
+                crashRocket();
+            }
+        }, 16);
     }
 
     function claimWin() {
-        clearInterval(gameInterval);
-        isGameRunning = false;
-        betInput.disabled = false;
-
+        hasClaimed = true;
         const winX = currentMultiplier.toFixed(2);
         const winAmount = (activeBet * currentMultiplier).toFixed(2);
         
@@ -498,45 +572,51 @@
         playerBetStatus.innerText = `+${winAmount} TON (x${winX})`;
         playerBetStatus.style.color = 'var(--color-green)';
 
-        let style = getColorStyle(currentMultiplier);
-        addHistoryItem(winX + 'x', style.class);
-
-        multiplierEl.style.transform = 'scale(1)';
-        multiplierEl.innerText = 'ВЫИГРЫШ!';
-        multiplierEl.style.color = 'var(--color-green)';
-        multiplierEl.style.textShadow = '0 0 25px rgba(0,230,118,0.6)';
-
-        resetMainBtn();
+        mainBtn.innerText = 'Выигрыш забран!';
+        mainBtn.disabled = true;
+        mainBtn.style.backgroundColor = 'var(--card-bg)';
+        mainBtn.style.boxShadow = 'none';
     }
 
-    function crashGame() {
+    function crashRocket() {
         clearInterval(gameInterval);
-        isGameRunning = false;
-        betInput.disabled = false;
+        isRocketFlying = false;
 
         const crashX = parseFloat(crashPoint).toFixed(2) + 'x';
         let style = getColorStyle(parseFloat(crashPoint));
         addHistoryItem(crashX, style.class);
 
-        playerBetStatus.innerText = `0.00 TON (${crashX})`;
-        playerBetStatus.style.color = 'var(--color-red)';
+        statusBadge.innerText = '• ВЗЛЕТЕЛА';
+        statusBadge.style.color = 'var(--color-red)';
+
+        if (isUserInBet && !hasClaimed) {
+            playerBetStatus.innerText = `0.00 TON (${crashX})`;
+            playerBetStatus.style.color = 'var(--color-red)';
+        }
 
         multiplierEl.style.transform = 'scale(1)';
         multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
         multiplierEl.style.color = 'var(--color-red)';
         multiplierEl.style.textShadow = '0 0 25px rgba(255,61,87,0.6)';
 
-        resetMainBtn();
+        // Сброс состояния ставки юзера
+        isUserInBet = false;
+        hasClaimed = false;
+        betInput.disabled = false;
 
+        mainBtn.disabled = true;
+        mainBtn.innerText = 'Раунд завершен';
+        mainBtn.style.backgroundColor = 'var(--card-bg)';
+        mainBtn.style.boxShadow = 'none';
+
+        // Пауза 2 секунды после взрыва ➔ Начинается отсчет 5с
         setTimeout(() => {
-            multiplierEl.innerText = '1.00x';
-            let resetStyle = getColorStyle(1.00);
-            multiplierEl.style.color = resetStyle.color;
-            multiplierEl.style.textShadow = resetStyle.shadow;
-        }, 1500);
+            startCountdown();
+        }, 2000);
     }
 
     function resetMainBtn() {
+        mainBtn.disabled = false;
         mainBtn.innerText = 'Сделать ставку';
         mainBtn.style.backgroundColor = 'var(--color-green)';
         mainBtn.style.boxShadow = '0 4px 15px rgba(0, 230, 118, 0.3)';
@@ -548,6 +628,9 @@
         item.innerText = text;
         historyCapsules.insertBefore(item, historyCapsules.firstChild);
     }
+
+    // Запуск первично
+    startCountdown();
 </script>
 </body>
 </html>
