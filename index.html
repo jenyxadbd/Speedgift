@@ -12,9 +12,14 @@
             --bg-main: #090C10;
             --card-bg: #121820;
             --card-border: #1B2431;
-            --accent-mint: #00E676;
-            --accent-gold: #FFD700;
-            --danger-red: #FF3D57;
+            
+            /* Градация цветов */
+            --color-red: #FF3D57;
+            --color-green: #00E676;
+            --color-blue: #29B6F6;
+            --color-purple: #AB47BC;
+            --color-gold: #FFD700;
+
             --text-main: #FFFFFF;
             --text-sub: #8B98A5;
         }
@@ -61,9 +66,9 @@
         
         .avatar {
             width: 36px; height: 36px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-mint), #00A859);
+            background: linear-gradient(135deg, var(--color-green), #00A859);
             display: flex; align-items: center; justify-content: center;
-            font-weight: bold; border: 2px solid var(--accent-mint);
+            font-weight: bold; border: 2px solid var(--color-green);
             color: #000;
         }
 
@@ -80,7 +85,7 @@
         }
 
         .btn-deposit {
-            background: var(--accent-mint);
+            background: var(--color-green);
             color: #000;
             border: none;
             padding: 6px 14px;
@@ -137,7 +142,7 @@
 
         .badge-hit {
             background: rgba(0,230,118,0.2);
-            color: var(--accent-mint);
+            color: var(--color-green);
             padding: 2px 8px; border-radius: 6px;
             font-size: 10px; font-weight: bold; text-transform: uppercase;
         }
@@ -155,9 +160,9 @@
 
         .multiplier-val {
             font-size: 54px; font-weight: 900;
-            color: var(--accent-mint);
-            text-shadow: 0 0 20px rgba(0,230,118,0.4);
-            transition: color 0.1s;
+            color: var(--color-red);
+            text-shadow: 0 0 20px rgba(255,61,87,0.4);
+            transition: color 0.15s, text-shadow 0.15s;
         }
 
         .history-capsules {
@@ -171,10 +176,11 @@
             background: var(--card-bg); border: 1px solid var(--card-border);
             white-space: nowrap;
         }
-        .capsule.win { color: var(--accent-mint); border-color: rgba(0,230,118,0.3); }
-        .capsule.gold { color: var(--accent-gold); border-color: rgba(255,215,0,0.3); }
-        .capsule.purple { color: #E040FB; border-color: rgba(224,64,251,0.3); }
-        .capsule.crash { color: var(--danger-red); border-color: rgba(255,61,87,0.3); }
+        .capsule.red { color: var(--color-red); border-color: rgba(255,61,87,0.3); }
+        .capsule.green { color: var(--color-green); border-color: rgba(0,230,118,0.3); }
+        .capsule.blue { color: var(--color-blue); border-color: rgba(41,182,246,0.3); }
+        .capsule.purple { color: var(--color-purple); border-color: rgba(171,71,188,0.3); }
+        .capsule.gold { color: var(--color-gold); border-color: rgba(255,215,0,0.3); }
 
         /* Ввод ставки */
         .bet-control-box {
@@ -205,7 +211,7 @@
         }
 
         .btn-main-action {
-            background: var(--accent-mint);
+            background: var(--color-green);
             color: #000;
             border: none;
             padding: 16px;
@@ -239,7 +245,7 @@
             display: flex; flex-direction: column; align-items: center; gap: 4px;
             color: var(--text-sub); font-size: 11px; cursor: pointer; width: 25%;
         }
-        .nav-tab.active { color: var(--accent-mint); font-weight: bold; }
+        .nav-tab.active { color: var(--color-green); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -269,11 +275,11 @@
         <div class="banner-card" onclick="switchTab('rocket')">
             <span class="badge-hit">🔥 ХИТ</span>
             <h2 style="margin-top:8px; font-size:24px;">🚀 РАКЕТКА</h2>
-            <p style="color:var(--text-sub); font-size:12px; margin-top:4px;">Множители до x1000</p>
+            <p style="color:var(--text-sub); font-size:12px; margin-top:4px;">Множители до x100</p>
         </div>
 
         <div class="banner-card" onclick="switchTab('cases')">
-            <span class="badge-hit" style="color:var(--accent-gold); background:rgba(255,215,0,0.1)">🎁 КЕЙСЫ</span>
+            <span class="badge-hit" style="color:var(--color-gold); background:rgba(255,215,0,0.1)">🎁 КЕЙСЫ</span>
             <h2 style="margin-top:8px; font-size:24px;">📦 EPIC CASES</h2>
             <p style="color:var(--text-sub); font-size:12px; margin-top:4px;">NFT, Звёзды и TON</p>
         </div>
@@ -282,10 +288,10 @@
     <!-- 2. РАКЕТКА -->
     <div id="screen-rocket" class="screen">
         <div class="history-capsules" id="historyCapsules">
-            <div class="capsule gold">4.12x</div>
-            <div class="capsule win">1.19x</div>
-            <div class="capsule win">1.08x</div>
-            <div class="capsule crash">1.03x</div>
+            <div class="capsule purple">4.12x</div>
+            <div class="capsule green">1.50x</div>
+            <div class="capsule blue">2.80x</div>
+            <div class="capsule red">1.05x</div>
         </div>
 
         <div class="rocket-display">
@@ -367,7 +373,7 @@
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    // Логика быстрой и жёсткой Ракетки
+    // Переменные состояния
     let userBalance = 12.50;
     let currentMultiplier = 1.00;
     let gameInterval = null;
@@ -389,6 +395,21 @@
             claimWin();
         }
     });
+
+    // Функция определения класса цвета и стиля по иксу
+    function getColorStyle(val) {
+        if (val < 1.19) {
+            return { class: 'red', color: 'var(--color-red)', shadow: '0 0 20px rgba(255,61,87,0.4)' };
+        } else if (val < 2.00) {
+            return { class: 'green', color: 'var(--color-green)', shadow: '0 0 20px rgba(0,230,118,0.4)' };
+        } else if (val < 3.50) {
+            return { class: 'blue', color: 'var(--color-blue)', shadow: '0 0 20px rgba(41,182,246,0.5)' };
+        } else if (val < 7.50) {
+            return { class: 'purple', color: 'var(--color-purple)', shadow: '0 0 25px rgba(171,71,188,0.6)' };
+        } else {
+            return { class: 'gold', color: 'var(--color-gold)', shadow: '0 0 35px rgba(255,215,0,0.8)' };
+        }
+    }
 
     function startGame() {
         let betValue = parseFloat(betInput.value);
@@ -414,48 +435,50 @@
         betInput.disabled = true;
 
         playerBetStatus.innerText = `В игре: ${activeBet.toFixed(2)} TON`;
-        playerBetStatus.style.color = 'var(--accent-gold)';
+        playerBetStatus.style.color = 'var(--color-gold)';
 
         mainBtn.innerText = 'Забрать';
         mainBtn.style.backgroundColor = '#FF9800';
         mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
 
-        // ЖЁСТКИЙ ПОДКУСТ МАТЕМАТИКИ:
-        // 70% случаев — взрыв на 1.02x - 1.80x
-        // 20% случаев — взрыв на 1.80x - 3.50x
-        // 10% случаев — редкий взлёт до 8.00x
+        // БАЛАНСИРОВАННАЯ МАТЕМАТИКА (Интересно играть):
+        // 15% — мгновенный слив (1.01 - 1.18)
+        // 40% — нормальный выигрыш (1.19 - 2.00)
+        // 25% — средний икс (2.00 - 3.50)
+        // 15% — хороший икс (3.50 - 7.50)
+        // 5%  — джекпот (7.50 - 25.00)
         let rand = Math.random();
-        if (rand < 0.70) {
-            crashPoint = (1.02 + Math.random() * 0.78).toFixed(2);
-        } else if (rand < 0.90) {
-            crashPoint = (1.80 + Math.random() * 1.70).toFixed(2);
+        if (rand < 0.15) {
+            crashPoint = (1.01 + Math.random() * 0.17).toFixed(2);
+        } else if (rand < 0.55) {
+            crashPoint = (1.19 + Math.random() * 0.81).toFixed(2);
+        } else if (rand < 0.80) {
+            crashPoint = (2.00 + Math.random() * 1.50).toFixed(2);
+        } else if (rand < 0.95) {
+            crashPoint = (3.50 + Math.random() * 4.00).toFixed(2);
         } else {
-            crashPoint = (3.50 + Math.random() * 4.50).toFixed(2);
+            crashPoint = (7.50 + Math.random() * 17.50).toFixed(2);
         }
 
-        // УСКОРЕННЫЙ ТАЙМЕР (30мс шаг 0.05)
+        // Подкрашиваем стартовый 1.00x в Красный
+        let initialStyle = getColorStyle(1.00);
+        multiplierEl.style.color = initialStyle.color;
+        multiplierEl.style.textShadow = initialStyle.shadow;
+
+        // Полет ракеты
         gameInterval = setInterval(() => {
-            currentMultiplier += 0.05;
+            currentMultiplier += 0.03;
             multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
 
-            if (currentMultiplier < 2.00) {
-                multiplierEl.style.color = 'var(--accent-mint)';
-                multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
-            } else if (currentMultiplier < 5.00) {
-                multiplierEl.style.color = '#FFB300';
-                multiplierEl.style.textShadow = '0 0 20px rgba(255,179,0,0.5)';
-            } else if (currentMultiplier < 10.00) {
-                multiplierEl.style.color = 'var(--accent-gold)';
-                multiplierEl.style.textShadow = '0 0 25px rgba(255,215,0,0.6)';
-            } else {
-                multiplierEl.style.color = '#E040FB';
-                multiplierEl.style.textShadow = '0 0 35px rgba(224,64,251,0.8)';
-            }
+            // Динамическая смена цвета по ходу роста икса
+            let style = getColorStyle(currentMultiplier);
+            multiplierEl.style.color = style.color;
+            multiplierEl.style.textShadow = style.shadow;
 
             if (currentMultiplier >= crashPoint) {
                 crashGame();
             }
-        }, 30);
+        }, 35);
     }
 
     function claimWin() {
@@ -470,16 +493,14 @@
         balanceEl.innerText = userBalance.toFixed(2);
 
         playerBetStatus.innerText = `+${winAmount} TON (x${winX})`;
-        playerBetStatus.style.color = 'var(--accent-mint)';
+        playerBetStatus.style.color = 'var(--color-green)';
 
-        let capType = 'win';
-        if (currentMultiplier >= 10) capType = 'purple';
-        else if (currentMultiplier >= 5) capType = 'gold';
-
-        addHistoryItem(winX + 'x', capType);
+        let style = getColorStyle(currentMultiplier);
+        addHistoryItem(winX + 'x', style.class);
 
         multiplierEl.innerText = 'ВЫИГРЫШ!';
-        multiplierEl.style.color = 'var(--accent-mint)';
+        multiplierEl.style.color = 'var(--color-green)';
+        multiplierEl.style.textShadow = '0 0 25px rgba(0,230,118,0.6)';
 
         resetMainBtn();
     }
@@ -489,32 +510,36 @@
         isGameRunning = false;
         betInput.disabled = false;
 
-        const crashX = crashPoint + 'x';
-        addHistoryItem(crashX, 'crash');
+        const crashX = parseFloat(crashPoint).toFixed(2) + 'x';
+        let style = getColorStyle(parseFloat(crashPoint));
+        addHistoryItem(crashX, style.class);
 
         playerBetStatus.innerText = `0.00 TON (${crashX})`;
-        playerBetStatus.style.color = 'var(--danger-red)';
+        playerBetStatus.style.color = 'var(--color-red)';
 
         multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
-        multiplierEl.style.color = 'var(--danger-red)';
+        multiplierEl.style.color = 'var(--color-red)';
+        multiplierEl.style.textShadow = '0 0 25px rgba(255,61,87,0.6)';
 
         resetMainBtn();
 
         setTimeout(() => {
             multiplierEl.innerText = '1.00x';
-            multiplierEl.style.color = 'var(--accent-mint)';
+            let resetStyle = getColorStyle(1.00);
+            multiplierEl.style.color = resetStyle.color;
+            multiplierEl.style.textShadow = resetStyle.shadow;
         }, 1500);
     }
 
     function resetMainBtn() {
         mainBtn.innerText = 'Сделать ставку';
-        mainBtn.style.backgroundColor = 'var(--accent-mint)';
+        mainBtn.style.backgroundColor = 'var(--color-green)';
         mainBtn.style.boxShadow = '0 4px 15px rgba(0, 230, 118, 0.3)';
     }
 
-    function addHistoryItem(text, type) {
+    function addHistoryItem(text, colorClass) {
         const item = document.createElement('div');
-        item.className = `capsule ${type}`;
+        item.className = `capsule ${colorClass}`;
         item.innerText = text;
         historyCapsules.insertBefore(item, historyCapsules.firstChild);
     }
