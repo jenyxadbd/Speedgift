@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TON Crash & Cases</title>
+    <title>TON Crash Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-main: #121315;
             --card-bg: #1A1D21;
             --card-border: #262B32;
-            --accent-blue: #007AFF;
             --accent-mint: #00E676;
             --accent-gold: #FFB300;
             --danger-red: #FF3D57;
@@ -44,6 +43,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            padding: 12px;
         }
 
         /* Шапка */
@@ -51,13 +51,31 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
-            height: 50px;
-            flex-shrink: 0;
+            margin-bottom: 12px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-mint), #00A859);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid var(--accent-mint);
+            color: #000;
         }
 
         .balance-box {
-            background: #1C222B;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             padding: 6px 14px;
             border-radius: 20px;
             font-weight: bold;
@@ -65,104 +83,36 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            border: 1px solid var(--card-border);
         }
 
-        /* Контейнер вкладок */
-        .tab-content {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            overflow-y: auto;
-            padding-bottom: 70px; /* Отступ под меню */
-        }
-
-        .tab-content.active {
-            display: flex;
-        }
-
-        /* ==== ВКЛАДКА 1: ИГРА ==== */
+        /* Игровая зона */
         .game-area {
-            height: 200px;
-            position: relative;
-            flex-shrink: 0;
-            margin: 0 16px 8px 16px;
-            background: #16191D;
-            border-radius: 16px;
+            height: 180px;
+            background: var(--card-bg);
             border: 1px solid var(--card-border);
-            overflow: hidden;
+            border-radius: 16px;
             display: flex;
-            justify-content: center;
             align-items: center;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .multiplier-overlay {
-            position: absolute;
-            font-size: 40px;
-            font-weight: 900;
-            color: #FFF;
-            text-shadow: 0 0 20px rgba(0, 122, 255, 0.6);
-            z-index: 2;
-        }
-
-        .multiplier-overlay.crashed {
-            color: var(--danger-red);
-            text-shadow: 0 0 20px rgba(255, 61, 87, 0.6);
-        }
-
-        .timer-circle-wrap {
+            justify-content: center;
+            margin-bottom: 12px;
             position: relative;
-            width: 110px;
-            height: 110px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 3;
         }
 
-        .timer-svg {
-            transform: rotate(-90deg);
-            width: 100%;
-            height: 100%;
-        }
-
-        .timer-svg circle {
-            fill: none;
-            stroke-width: 6;
-        }
-
-        .timer-bg { stroke: #1A2633; }
-        .timer-progress {
-            stroke: var(--accent-blue);
-            stroke-dasharray: 408;
-            stroke-dashoffset: 0;
-            transition: stroke-dashoffset 0.1s linear;
-            stroke-linecap: round;
-        }
-
-        .timer-text {
-            position: absolute;
-            font-size: 36px;
+        .multiplier-val {
+            font-size: 48px;
             font-weight: 900;
-            color: #FFF;
+            color: var(--accent-mint);
+            text-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+            transition: color 0.2s, text-shadow 0.2s;
         }
 
+        /* Капсулы истории */
         .history-bar {
             display: flex;
             gap: 8px;
-            padding: 0 16px;
             margin-bottom: 12px;
             overflow-x: auto;
             scrollbar-width: none;
-            flex-shrink: 0;
         }
 
         .capsule {
@@ -170,179 +120,71 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
-            background: #1A212A;
-            color: #8B98A5;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             white-space: nowrap;
         }
 
-        .capsule.current {
-            background: rgba(0, 230, 118, 0.15);
-            color: var(--accent-mint);
-            border: 1px solid var(--accent-mint);
-        }
+        .capsule.win { color: var(--accent-mint); border-color: rgba(0, 230, 118, 0.3); }
+        .capsule.gold { color: var(--accent-gold); border-color: rgba(255, 179, 0, 0.3); }
+        .capsule.purple { color: #E040FB; border-color: rgba(224, 64, 251, 0.3); }
+        .capsule.crash { color: var(--danger-red); border-color: rgba(255, 61, 87, 0.3); }
 
-        .capsule.purple { color: #D080FF; background: #261A33; }
-        .capsule.gold { color: #FFB300; background: #2A241A; }
-        .capsule.red { color: #FF4D4D; background: #2A1A1D; }
-
-        .controls-box {
-            padding: 0 16px;
-            margin-bottom: 12px;
-            flex-shrink: 0;
-        }
-
-        .bet-input-row {
+        /* Блок выбора ставки */
+        .bet-control-box {
             display: flex;
-            background: #1A212A;
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
             align-items: center;
-            justify-content: space-between;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 6px 12px;
+            margin-bottom: 10px;
+            gap: 10px;
         }
 
-        .bet-input-row input {
+        .bet-control-box label {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .bet-input {
             background: transparent;
             border: none;
-            color: #FFF;
+            color: var(--text-main);
             font-size: 16px;
             font-weight: bold;
+            width: 100%;
             outline: none;
-            width: 100px;
         }
 
-        .btn-action {
-            width: 100%;
-            background: var(--accent-blue);
-            color: #FFF;
+        .btn-main-action {
+            background: var(--accent-mint);
+            color: #000;
             border: none;
+            width: 100%;
             padding: 14px;
             border-radius: 14px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+            transition: transform 0.1s, background-color 0.2s;
         }
 
-        .players-container {
-            flex: 1;
-            background: #16191D;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            padding: 12px 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .btn-main-action:active { transform: scale(0.98); }
 
-        /* ==== ВКЛАДКА 2: КЕЙСЫ ==== */
-        .cases-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            padding: 16px;
-        }
-
-        .case-card {
-            background: var(--card-bg);
+        /* Игроки внизу */
+        .players-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .player-card {
+            background: var(--card-bg); 
             border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 10px;
-        }
-
-        .case-icon {
-            font-size: 48px;
-        }
-
-        .case-title {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .case-price {
-            font-size: 12px;
-            color: var(--accent-gold);
-            font-weight: bold;
-            background: rgba(255, 179, 0, 0.1);
-            padding: 4px 10px;
-            border-radius: 8px;
-        }
-
-        /* ==== ВКЛАДКА 3: ИНВЕНТАРЬ ==== */
-        .inventory-list {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .inventory-item {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            padding: 10px 12px; 
             border-radius: 12px;
-            padding: 12px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 12px;
-        }
-
-        .item-icon {
-            font-size: 28px;
-        }
-
-        .item-info {
-            flex: 1;
-        }
-
-        .item-name {
             font-size: 14px;
-            font-weight: bold;
-        }
-
-        .item-val {
-            font-size: 12px;
-            color: var(--text-sub);
-        }
-
-        /* ==== НИЖНЕЕ МЕНЮ (НАВИГАЦИЯ) ==== */
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 65px;
-            background: #16191D;
-            border-top: 1px solid var(--card-border);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 10;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-sub);
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .nav-item .nav-icon {
-            font-size: 20px;
-        }
-
-        .nav-item.active {
-            color: var(--accent-blue);
         }
     </style>
 </head>
@@ -351,301 +193,214 @@
 <div class="app-container">
     <!-- Шапка -->
     <div class="header">
-        <div style="font-weight: bold; font-size: 14px; color: var(--text-sub);" id="headerTitle">🚀 Crash Game</div>
+        <div class="user-info">
+            <div class="avatar" id="avatarName">J</div>
+        </div>
         <div class="balance-box">
             <span>💎</span> <span id="balance">12.50</span>
         </div>
     </div>
 
-    <!-- 1. ВКЛАДКА: ИГРА -->
-    <div class="tab-content active" id="tab-game">
-        <div class="game-area">
-            <canvas id="chartCanvas"></canvas>
-            <div class="multiplier-overlay" id="multiplierText" style="display: none;">1.00x</div>
-            <div class="timer-circle-wrap" id="timerBox">
-                <svg class="timer-svg" viewBox="0 0 140 140">
-                    <circle class="timer-bg" cx="70" cy="70" r="65"></circle>
-                    <circle class="timer-progress" id="timerCircle" cx="70" cy="70" r="65"></circle>
-                </svg>
-                <div class="timer-text" id="timerNum">5</div>
-            </div>
-        </div>
-
-        <div class="history-bar">
-            <div class="capsule current" id="currentCapsule">BET</div>
-            <div class="capsule gold">10.3x</div>
-            <div class="capsule purple">2.34x</div>
-            <div class="capsule purple">6.12x</div>
-            <div class="capsule red">1.05x</div>
-        </div>
-
-        <div class="controls-box">
-            <div class="bet-input-row">
-                <span style="font-size:12px; color:var(--text-sub); font-weight:bold;">Ставка:</span>
-                <input type="number" id="betInput" value="0.50" step="0.10" min="0.10">
-                <span style="font-size:12px; color:#FFF; font-weight:bold;">TON</span>
-            </div>
-            <button class="btn-action" id="actionBtn">Сделать ставку</button>
-        </div>
-
-        <div class="players-container" id="playersList"></div>
+    <!-- Капсулы истории -->
+    <div class="history-bar" id="historyCapsules">
+        <div class="capsule gold">10.30x</div>
+        <div class="capsule purple">2.34x</div>
+        <div class="capsule purple">6.12x</div>
+        <div class="capsule crash">1.05x</div>
     </div>
 
-    <!-- 2. ВКЛАДКА: КЕЙСЫ -->
-    <div class="tab-content" id="tab-cases">
-        <div class="cases-grid">
-            <div class="case-card">
-                <div class="case-icon">📦</div>
-                <div class="case-title">Стартовый</div>
-                <div class="case-price">💎 0.50 TON</div>
-            </div>
-            <div class="case-card">
-                <div class="case-icon">🎁</div>
-                <div class="case-title">VIP Кейс</div>
-                <div class="case-price">💎 2.00 TON</div>
-            </div>
-            <div class="case-card">
-                <div class="case-icon">💎</div>
-                <div class="case-title">Драгоценный</div>
-                <div class="case-price">💎 5.00 TON</div>
-            </div>
-            <div class="case-card">
-                <div class="case-icon">👑</div>
-                <div class="case-title">Королевский</div>
-                <div class="case-price">💎 10.00 TON</div>
-            </div>
-        </div>
+    <!-- Игровая зона -->
+    <div class="game-area">
+        <div class="multiplier-val" id="multiplier">1.00x</div>
     </div>
 
-    <!-- 3. ВКЛАДКА: ИНВЕНТАРЬ -->
-    <div class="tab-content" id="tab-inventory">
-        <div class="inventory-list">
-            <div class="inventory-item">
-                <div class="item-icon">⚡</div>
-                <div class="item-info">
-                    <div class="item-name">Ускоритель x2</div>
-                    <div class="item-val">Бонус к следующей ставке</div>
-                </div>
-            </div>
-            <div class="inventory-item">
-                <div class="item-icon">🏆</div>
-                <div class="item-name">Бейдж Первопроходца</div>
-            </div>
-        </div>
+    <!-- Поле ввода ставки -->
+    <div class="bet-control-box">
+        <label for="betAmount">Ставка:</label>
+        <input type="number" id="betAmount" class="bet-input" value="0.50" step="0.10" min="0.10" max="100.00">
+        <span style="font-size:12px; color:var(--text-sub); font-weight:bold;">TON</span>
     </div>
 
-    <!-- НИЖНЕЕ МЕНЮ -->
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('game', '🚀 Crash Game', this)">
-            <span class="nav-icon">🚀</span>
-            <span>Игра</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('cases', '📦 Кейсы', this)">
-            <span class="nav-icon">📦</span>
-            <span>Кейсы</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('inventory', '🎒 Инвентарь', this)">
-            <span class="nav-icon">🎒</span>
-            <span>Инвентарь</span>
+    <button class="btn-main-action" id="mainBtn">Сделать ставку</button>
+
+    <!-- Ставка игрока внизу -->
+    <div class="players-list" id="playersList">
+        <div class="player-card" id="myBetCard">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:24px; height:24px; background:#222; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;" id="playerIcon">J</div>
+                <b id="playerName">@jenyxa</b>
+            </div>
+            <span style="color:var(--text-sub); font-weight:bold;" id="playerBetStatus">Ожидание ставки</span>
         </div>
     </div>
 </div>
 
 <script>
-    // Переключение вкладок
-    function switchTab(tabName, title, el) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        
-        document.getElementById('tab-' + tabName).classList.add('active');
-        el.classList.add('active');
-        document.getElementById('headerTitle').innerText = title;
+    // Инициализация Telegram WebApp
+    const tg = window.Telegram?.WebApp;
+    let userName = "@jenyxa";
 
-        if (tabName === 'game') {
-            resizeCanvas();
+    if (tg) { 
+        tg.ready(); 
+        tg.expand(); 
+        if (tg.initDataUnsafe?.user?.username) {
+            userName = "@" + tg.initDataUnsafe.user.username;
+            document.getElementById('playerName').innerText = userName;
+            document.getElementById('avatarName').innerText = userName.charAt(1).toUpperCase();
+            document.getElementById('playerIcon').innerText = userName.charAt(1).toUpperCase();
         }
     }
 
-    // Telegram User
-    const tg = window.Telegram?.WebApp;
-    let myName = tg?.initDataUnsafe?.user?.username ? "@" + tg.initDataUnsafe.user.username : "@jenyxa";
-
-    // Canvas
-    const canvas = document.getElementById('chartCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    function resizeCanvas() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Игра
+    // ЛОГИКА РАКЕТКИ С ВВОДОМ СТАВКИ
     let userBalance = 12.50;
-    let isGameRunning = false;
-    let isCountingDown = false;
-    let hasPlacedBet = false;
-    let hasClaimed = false;
-    let activeBet = 0.50;
     let currentMultiplier = 1.00;
-    let crashPoint = 0;
-    let flightProgress = 0;
     let gameInterval = null;
-    let countdownInterval = null;
+    let isGameRunning = false;
+    let crashPoint = 0;
+    let activeBet = 0.50;
 
-    const timerBox = document.getElementById('timerBox');
-    const timerNum = document.getElementById('timerNum');
-    const timerCircle = document.getElementById('timerCircle');
-    const multiplierText = document.getElementById('multiplierText');
-    const actionBtn = document.getElementById('actionBtn');
-    const currentCapsule = document.getElementById('currentCapsule');
+    const multiplierEl = document.getElementById('multiplier');
+    const mainBtn = document.getElementById('mainBtn');
+    const historyCapsules = document.getElementById('historyCapsules');
     const balanceEl = document.getElementById('balance');
-    const betInput = document.getElementById('betInput');
-    const playersList = document.getElementById('playersList');
+    const betInput = document.getElementById('betAmount');
+    const playerBetStatus = document.getElementById('playerBetStatus');
 
-    actionBtn.addEventListener('click', () => {
-        if (isCountingDown) {
-            if (!hasPlacedBet) placeBet();
-            else cancelBet();
-        } else if (isGameRunning && hasPlacedBet && !hasClaimed) {
+    mainBtn.addEventListener('click', () => {
+        if (!isGameRunning) {
+            startGame();
+        } else {
             claimWin();
         }
     });
 
-    function drawChart(progress, isCrashed = false) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-        ctx.lineWidth = 1;
-        for (let x = 0; x < canvas.width; x += 40) {
-            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    function startGame() {
+        // Чтение и валидация суммы ставки
+        let betValue = parseFloat(betInput.value);
+        if (isNaN(betValue) || betValue < 0.10) {
+            alert('Минимальная ставка — 0.10 TON');
+            return;
         }
-        for (let y = 0; y < canvas.height; y += 40) {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        if (betValue > 100.00) {
+            alert('Максимальная ставка — 100.00 TON');
+            return;
+        }
+        if (betValue > userBalance) {
+            alert('Недостаточно баланса!');
+            return;
         }
 
-        if (!isGameRunning && !isCrashed) return;
+        activeBet = betValue;
+        userBalance -= activeBet;
+        balanceEl.innerText = userBalance.toFixed(2);
 
-        let startX = 20, startY = canvas.height - 20;
-        let endX = 20 + (canvas.width - 60) * Math.min(progress, 1);
-        let endY = (canvas.height - 20) - (canvas.height - 60) * Math.min(progress, 1);
+        isGameRunning = true;
+        currentMultiplier = 1.00;
+        betInput.disabled = true; // Запрещаем изменять ставку во время игры
 
-        let fillGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        fillGrad.addColorStop(0, isCrashed ? "rgba(255, 61, 87, 0.3)" : "rgba(0, 122, 255, 0.4)");
-        fillGrad.addColorStop(1, "rgba(0, 0, 0, 0.0)");
+        // Отображение ставки внизу
+        playerBetStatus.innerText = `В игре: ${activeBet.toFixed(2)} TON`;
+        playerBetStatus.style.color = 'var(--accent-gold)';
 
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.quadraticCurveTo(endX * 0.3, startY, endX, endY);
-        ctx.lineTo(endX, startY);
-        ctx.closePath();
-        ctx.fillStyle = fillGrad;
-        ctx.fill();
+        // Меняем кнопку на "Забрать"
+        mainBtn.innerText = 'Забрать';
+        mainBtn.style.backgroundColor = '#FF9800';
+        mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
 
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.quadraticCurveTo(endX * 0.3, startY, endX, endY);
-        ctx.strokeStyle = isCrashed ? "#FF3D57" : "#007AFF";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        if (!isCrashed) {
-            ctx.font = "24px sans-serif";
-            ctx.fillText("🚀", endX - 12, endY + 8);
-        }
-    }
-
-    function startCountdown() {
-        isCountingDown = true; isGameRunning = false; hasPlacedBet = false; hasClaimed = false; flightProgress = 0;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        timerBox.style.display = 'flex';
-        multiplierText.style.display = 'none';
-        multiplierText.classList.remove('crashed');
-
-        currentCapsule.innerText = "BET";
-        currentCapsule.className = "capsule current";
-        actionBtn.innerText = "Сделать ставку";
-        actionBtn.disabled = false;
-        betInput.disabled = false;
-
-        let timeLeft = 5;
-        timerNum.innerText = timeLeft;
-        renderPlayersList();
-
-        countdownInterval = setInterval(() => {
-            timeLeft -= 0.1;
-            if (timeLeft <= 0) {
-                clearInterval(countdownInterval);
-                startFlight();
-            } else {
-                timerNum.innerText = Math.ceil(timeLeft);
-                timerCircle.style.strokeDashoffset = 408 - (timeLeft / 5) * 408;
-            }
-        }, 100);
-    }
-
-    function startFlight() {
-        isCountingDown = false; isGameRunning = true; currentMultiplier = 1.00;
-        crashPoint = (Math.random() * 8 + 1.10).toFixed(2);
-        timerBox.style.display = 'none';
-        multiplierText.style.display = 'block';
-        betInput.disabled = true;
-
-        if (hasPlacedBet) actionBtn.innerText = "Забрать";
-        else { actionBtn.innerText = "В игре..."; actionBtn.disabled = true; }
+        // Рандомная точка взрыва от 1.05x до 15.00x
+        crashPoint = (Math.random() * 14 + 1.05).toFixed(2);
 
         gameInterval = setInterval(() => {
-            currentMultiplier += 0.02;
-            flightProgress += 0.008;
-            let formattedX = currentMultiplier.toFixed(2) + "x";
-            multiplierText.innerText = formattedX;
-            currentCapsule.innerText = formattedX;
-            drawChart(flightProgress);
-            if (currentMultiplier >= crashPoint) crash();
+            currentMultiplier += 0.03;
+            multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
+
+            // Градиентная смена цвета в зависимости от коэффициента
+            if (currentMultiplier < 2.00) {
+                multiplierEl.style.color = 'var(--accent-mint)';
+                multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
+            } else if (currentMultiplier < 5.00) {
+                multiplierEl.style.color = '#FFB300';
+                multiplierEl.style.textShadow = '0 0 20px rgba(255,179,0,0.5)';
+            } else if (currentMultiplier < 10.00) {
+                multiplierEl.style.color = 'var(--accent-gold)';
+                multiplierEl.style.textShadow = '0 0 25px rgba(255,215,0,0.6)';
+            } else {
+                multiplierEl.style.color = '#E040FB';
+                multiplierEl.style.textShadow = '0 0 35px rgba(224,64,251,0.8)';
+            }
+
+            if (currentMultiplier >= crashPoint) {
+                crashGame();
+            }
         }, 60);
     }
 
-    function placeBet() {
-        let val = parseFloat(betInput.value);
-        if (val > userBalance) return alert("Недостаточно баланса!");
-        activeBet = val; userBalance -= activeBet; balanceEl.innerText = userBalance.toFixed(2);
-        hasPlacedBet = true; actionBtn.innerText = "Отменить ставку"; renderPlayersList();
-    }
-
-    function cancelBet() {
-        userBalance += activeBet; balanceEl.innerText = userBalance.toFixed(2);
-        hasPlacedBet = false; actionBtn.innerText = "Сделать ставку"; renderPlayersList();
-    }
-
     function claimWin() {
-        hasClaimed = true;
-        let win = (activeBet * currentMultiplier).toFixed(2);
-        userBalance += parseFloat(win); balanceEl.innerText = userBalance.toFixed(2);
-        actionBtn.innerText = `Выиграно +${win} TON!`; actionBtn.disabled = true; renderPlayersList();
+        clearInterval(gameInterval);
+        isGameRunning = false;
+        betInput.disabled = false;
+
+        const winX = currentMultiplier.toFixed(2);
+        const winAmount = (activeBet * currentMultiplier).toFixed(2);
+        
+        // Пополнение баланса
+        userBalance += parseFloat(winAmount);
+        balanceEl.innerText = userBalance.toFixed(2);
+
+        // Обновление статуса в плашке внизу
+        playerBetStatus.innerText = `+${winAmount} TON (x${winX})`;
+        playerBetStatus.style.color = 'var(--accent-mint)';
+
+        let capType = 'win';
+        if (currentMultiplier >= 10) capType = 'purple';
+        else if (currentMultiplier >= 5) capType = 'gold';
+
+        addHistoryItem(winX + 'x', capType);
+
+        multiplierEl.innerText = 'ВЫИГРЫШ!';
+        multiplierEl.style.color = 'var(--accent-mint)';
+        multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
+
+        resetMainBtn();
     }
 
-    function crash() {
-        clearInterval(gameInterval); isGameRunning = false;
-        multiplierText.classList.add('crashed'); multiplierText.innerText = "CRASHED";
-        currentCapsule.className = "capsule red"; actionBtn.innerText = "Улетела!"; actionBtn.disabled = true;
-        drawChart(flightProgress, true);
-        setTimeout(startCountdown, 2000);
+    function crashGame() {
+        clearInterval(gameInterval);
+        isGameRunning = false;
+        betInput.disabled = false;
+
+        const crashX = crashPoint + 'x';
+        addHistoryItem(crashX, 'crash');
+
+        // Потеря ставки
+        playerBetStatus.innerText = `0.00 TON (${crashX})`;
+        playerBetStatus.style.color = 'var(--danger-red)';
+
+        multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
+        multiplierEl.style.color = 'var(--danger-red)';
+        multiplierEl.style.textShadow = '0 0 20px rgba(255,61,87,0.5)';
+
+        resetMainBtn();
+
+        setTimeout(() => {
+            multiplierEl.innerText = '1.00x';
+            multiplierEl.style.color = 'var(--accent-mint)';
+            multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
+        }, 1500);
     }
 
-    function renderPlayersList() {
-        if (hasPlacedBet) {
-            let winText = hasClaimed ? `💎 ${(activeBet * currentMultiplier).toFixed(2)}` : `💎 ${activeBet.toFixed(2)}`;
-            playersList.innerHTML = `
-                <div class="player-row" style="background:#1C2128; border:1px solid var(--accent-blue); border-radius:12px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-weight:bold; font-size:13px;">${myName}</span>
-                    <span style="color:var(--accent-mint); font-weight:bold; font-size:13px;">${winText}</span>
-                </div>`;
-        } else {
-            playersList.innerHTML = `<div style="text-align:center; color:var(--text-sub); font-size:12px; margin-top:10px;">Ставок пока нет</div>`;
-        }
+    function resetMainBtn() {
+        mainBtn.innerText = 'Сделать ставку';
+        mainBtn.style.backgroundColor = 'var(--accent-mint)';
+        mainBtn.style.boxShadow = '0 4px 15px rgba(0, 230, 118, 0.3)';
     }
 
-    startCountdown();
+    function addHistoryItem(text, type) {
+        const item = document.createElement('div');
+        item.className = `capsule ${type}`;
+        item.innerText = text;
+        historyCapsules.insertBefore(item, historyCapsules.firstChild);
+    }
 </script>
 </body>
 </html>
