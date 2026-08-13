@@ -41,8 +41,8 @@
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
 
-        // Подключаемся к серверу Replit с портом 3000
-        const socket = io('https://workspace--artemgg2014.replit.dev:3000', {
+        // Подключаемся к туннелю LocalTunnel
+        const socket = io('https://wild-parts-give.loca.lt', {
             transports: ['websocket', 'polling']
         });
 
