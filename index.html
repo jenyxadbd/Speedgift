@@ -149,7 +149,7 @@
 
         /* Игровой дисплей (Ракетка) */
         .rocket-display {
-            height: 180px;
+            height: 200px;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             background: radial-gradient(circle, #15221B 0%, var(--bg-main) 70%);
@@ -176,6 +176,46 @@
             text-shadow: 0 0 20px rgba(255,61,87,0.4);
             transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.1s ease;
             will-change: transform, color;
+            z-index: 2;
+        }
+
+        /* Стильный SVG-круговой таймер */
+        .timer-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-svg {
+            transform: rotate(-90deg);
+            width: 120px;
+            height: 120px;
+        }
+
+        .timer-circle-bg {
+            fill: none;
+            stroke: var(--card-border);
+            stroke-width: 6;
+        }
+
+        .timer-circle-progress {
+            fill: none;
+            stroke: var(--color-green);
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 326.7; /* 2 * PI * r (r=52) */
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        .timer-text {
+            position: absolute;
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text-main);
         }
 
         .history-capsules {
@@ -311,6 +351,17 @@
 
         <div class="rocket-display">
             <div class="status-badge" id="statusBadge">• ПОДГОТОВКА</div>
+            
+            <!-- Оконный таймер (отображается при отсчете) -->
+            <div class="timer-container" id="timerBox" style="display: none;">
+                <svg class="timer-svg">
+                    <circle class="timer-circle-bg" cx="60" cy="60" r="52"></circle>
+                    <circle class="timer-circle-progress" id="timerProgress" cx="60" cy="60" r="52"></circle>
+                </svg>
+                <div class="timer-text" id="timerText">5</div>
+            </div>
+
+            <!-- Икс (отображается при полете) -->
             <div class="multiplier-val" id="multiplier">1.00x</div>
         </div>
 
@@ -404,6 +455,10 @@
     let activeBet = 0.50;
 
     const multiplierEl = document.getElementById('multiplier');
+    const timerBox = document.getElementById('timerBox');
+    const timerText = document.getElementById('timerText');
+    const timerProgress = document.getElementById('timerProgress');
+    
     const mainBtn = document.getElementById('mainBtn');
     const historyCapsules = document.getElementById('historyCapsules');
     const balanceEl = document.getElementById('balance');
@@ -411,10 +466,12 @@
     const playerBetStatus = document.getElementById('playerBetStatus');
     const statusBadge = document.getElementById('statusBadge');
 
+    const CIRCUMFERENCE = 326.7; // 2 * PI * 52
+
     mainBtn.addEventListener('click', () => {
-        if (!isUserInBet) {
+        if (isCountdown && !isUserInBet) {
             placeBet();
-        } else if (!hasClaimed && isRocketFlying) {
+        } else if (isRocketFlying && isUserInBet && !hasClaimed) {
             claimWin();
         }
     });
@@ -433,7 +490,7 @@
         }
     }
 
-    // Оформление ставки
+    // Принятие ставки во время таймера
     function placeBet() {
         let betValue = parseFloat(betInput.value);
         if (isNaN(betValue) || betValue < 0.10) {
@@ -460,12 +517,8 @@
         playerBetStatus.innerText = `В игре: ${activeBet.toFixed(2)} TON`;
         playerBetStatus.style.color = 'var(--color-gold)';
 
-        if (isCountdown) {
-            mainBtn.innerText = 'Ставка принята! Ожидание...';
-            mainBtn.disabled = true;
-        } else if (isRocketFlying) {
-            updateClaimBtnText();
-        }
+        mainBtn.innerText = 'Ставка принята! Ожидание...';
+        mainBtn.disabled = true;
     }
 
     function updateClaimBtnText() {
@@ -478,20 +531,20 @@
         }
     }
 
-    // 1. Запуск обратного отсчета (5 секунд)
+    // 1. Запуск обратного отсчета с динамическим кругом
     function startCountdown() {
         isCountdown = true;
         isRocketFlying = false;
         currentMultiplier = 1.00;
 
-        multiplierEl.innerText = '1.00x';
-        multiplierEl.style.transform = 'scale(1)';
-        let resetStyle = getColorStyle(1.00);
-        multiplierEl.style.color = resetStyle.color;
-        multiplierEl.style.textShadow = resetStyle.shadow;
+        // Показываем круглый таймер, скрываем икс
+        multiplierEl.style.display = 'none';
+        timerBox.style.display = 'flex';
 
-        let timeLeft = 5;
-        statusBadge.innerText = `• СТАРТ ЧЕРЕЗ ${timeLeft}с`;
+        let totalTime = 5.0;
+        let timeRemaining = 5.0;
+
+        statusBadge.innerText = '• ДО СТАРТА';
         statusBadge.style.color = 'var(--color-gold)';
 
         if (!isUserInBet) {
@@ -502,22 +555,36 @@
         }
 
         countdownInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft > 0) {
-                statusBadge.innerText = `• СТАРТ ЧЕРЕЗ ${timeLeft}с`;
+            timeRemaining -= 0.1;
+            
+            if (timeRemaining > 0) {
+                timerText.innerText = Math.ceil(timeRemaining);
+                // Расчет заполнения круга
+                let offset = CIRCUMFERENCE - (timeRemaining / totalTime) * CIRCUMFERENCE;
+                timerProgress.style.strokeDashoffset = offset;
             } else {
                 clearInterval(countdownInterval);
                 isCountdown = false;
-                startRocketFlight(); // Запускаем полет
+                startRocketFlight(); // Запуск ракеты
             }
-        }, 1000);
+        }, 100);
     }
 
     // 2. Запуск полета ракеты
     function startRocketFlight() {
         isRocketFlying = true;
+        
+        // Скрываем таймер, показываем икс
+        timerBox.style.display = 'none';
+        multiplierEl.style.display = 'block';
+
         statusBadge.innerText = '• ПОЛЕТ';
         statusBadge.style.color = 'var(--color-green)';
+
+        multiplierEl.innerText = '1.00x';
+        let resetStyle = getColorStyle(1.00);
+        multiplierEl.style.color = resetStyle.color;
+        multiplierEl.style.textShadow = resetStyle.shadow;
 
         // Генерация точки падения
         let rand = Math.random();
@@ -533,18 +600,23 @@
             crashPoint = (7.50 + Math.random() * 17.50).toFixed(2);
         }
 
+        // Запрет ставок во время полета, если игрок не ставил заранее
         if (isUserInBet && !hasClaimed) {
             updateClaimBtnText();
-        } else if (!isUserInBet) {
-            resetMainBtn();
+        } else {
+            mainBtn.disabled = true;
+            mainBtn.innerText = 'Идет раунд...';
+            mainBtn.style.backgroundColor = 'var(--card-bg)';
+            mainBtn.style.boxShadow = 'none';
+            betInput.disabled = true;
         }
 
-        // Плавный полет (60 FPS)
+        // Замедленный полет ракеты (шаг 0.003 за 16мс)
         gameInterval = setInterval(() => {
-            currentMultiplier += 0.008; // Медленный плавный рост
+            currentMultiplier += 0.003; // Очень плавный и медленный рост
             multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
 
-            let scaleVal = 1 + (currentMultiplier % 0.1) * 0.15;
+            let scaleVal = 1 + (currentMultiplier % 0.1) * 0.1;
             multiplierEl.style.transform = `scale(${scaleVal})`;
 
             let style = getColorStyle(currentMultiplier);
@@ -599,17 +671,16 @@
         multiplierEl.style.color = 'var(--color-red)';
         multiplierEl.style.textShadow = '0 0 25px rgba(255,61,87,0.6)';
 
-        // Сброс состояния ставки юзера
+        // Сброс состояния игрока
         isUserInBet = false;
         hasClaimed = false;
-        betInput.disabled = false;
 
         mainBtn.disabled = true;
         mainBtn.innerText = 'Раунд завершен';
         mainBtn.style.backgroundColor = 'var(--card-bg)';
         mainBtn.style.boxShadow = 'none';
 
-        // Пауза 2 секунды после взрыва ➔ Начинается отсчет 5с
+        // Пауза 2 секунды перед следующим таймером
         setTimeout(() => {
             startCountdown();
         }, 2000);
@@ -629,7 +700,7 @@
         historyCapsules.insertBefore(item, historyCapsules.firstChild);
     }
 
-    // Запуск первично
+    // Запуск приложения
     startCountdown();
 </script>
 </body>
