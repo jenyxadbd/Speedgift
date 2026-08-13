@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>TON Neo Hub</title>
-    <!-- SDK Telegram и TON -->
+    <!-- SDK Telegram и TON Connect -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
@@ -18,16 +18,6 @@
             --text-main: #FFFFFF;
             --text-sub: #8B98A5;
         }
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Speedgift - Rocket Game</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
 
         * {
             box-sizing: border-box;
@@ -36,15 +26,6 @@
             user-select: none;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Roboto, sans-serif;
         }
-    body {
-      background-color: #0d1117;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 16px;
-    }
 
         body {
             background-color: var(--bg-main);
@@ -55,15 +36,6 @@
             min-height: 100vh;
             overflow: hidden;
         }
-    /* Верхняя панель */
-    .header {
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
 
         .app-container {
             width: 100%;
@@ -74,17 +46,6 @@
             flex-direction: column;
             position: relative;
         }
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      background: #00e676;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: #000;
-    }
 
         /* Шапка */
         .header {
@@ -95,31 +56,16 @@
             background: var(--card-bg);
             border-bottom: 1px solid var(--card-border);
         }
-    .balance {
-      background: #161b22;
-      padding: 8px 14px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 14px;
-      border: 1px solid #30363d;
-    }
 
         .user-info { display: flex; align-items: center; gap: 10px; }
+        
         .avatar {
             width: 36px; height: 36px; border-radius: 50%;
             background: linear-gradient(135deg, var(--accent-mint), #00A859);
             display: flex; align-items: center; justify-content: center;
             font-weight: bold; border: 2px solid var(--accent-mint);
+            color: #000;
         }
-    .deposit-btn {
-      background: #00e676;
-      color: #000;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: bold;
-      cursor: pointer;
-    }
 
         .balance-box {
             background: #0D1219;
@@ -132,15 +78,6 @@
             gap: 6px;
             border: 1px solid var(--card-border);
         }
-    /* История иксов */
-    .history {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 25px;
-      width: 100%;
-      max-width: 400px;
-      justify-content: center;
-    }
 
         .btn-deposit {
             background: var(--accent-mint);
@@ -152,16 +89,8 @@
             font-size: 12px;
             cursor: pointer;
         }
-    .history-item {
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
 
-        /* Экраны */
+        /* Экраны приложения */
         .screen {
             flex: 1;
             display: none;
@@ -170,9 +99,6 @@
             overflow-y: auto;
         }
         .screen.active { display: flex; }
-    .history-item.green { color: #00e676; border-color: rgba(0, 230, 118, 0.3); }
-    .history-item.yellow { color: #ffd600; border-color: rgba(255, 214, 0, 0.3); }
-    .history-item.red { color: #ff5252; border-color: rgba(255, 82, 82, 0.3); }
 
         /* Бегущая Live-лента */
         .live-feed {
@@ -180,6 +106,8 @@
             padding-bottom: 8px; margin-bottom: 12px;
             scrollbar-width: none;
         }
+        .live-feed::-webkit-scrollbar { display: none; }
+
         .live-item {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -189,21 +117,6 @@
             display: flex; align-items: center; gap: 6px;
             white-space: nowrap;
         }
-    /* Экран игры */
-    .game-screen {
-      width: 100%;
-      max-width: 400px;
-      height: 220px;
-      background: radial-gradient(circle, rgba(0,230,118,0.08) 0%, rgba(13,17,23,1) 70%);
-      border-radius: 20px;
-      border: 1px solid #21262d;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
-      position: relative;
-    }
 
         /* Баннеры режимов */
         .banner-card {
@@ -221,13 +134,6 @@
             width: 100px; height: 100px;
             background: radial-gradient(circle, rgba(0,230,118,0.15) 0%, rgba(0,0,0,0) 70%);
         }
-    .multiplier {
-      font-size: 48px;
-      font-weight: 900;
-      color: #00e676;
-      text-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
-      transition: color 0.2s;
-    }
 
         .badge-hit {
             background: rgba(0,230,118,0.2);
@@ -235,64 +141,68 @@
             padding: 2px 8px; border-radius: 6px;
             font-size: 10px; font-weight: bold; text-transform: uppercase;
         }
-    /* Кнопка ставки */
-    .action-btn {
-      width: 100%;
-      max-width: 400px;
-      height: 52px;
-      background: #00e676;
-      color: #000;
-      border: none;
-      border-radius: 14px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
-      transition: all 0.2s;
-    }
 
-        /* РАКЕТКА (Экран 2) */
+        /* Игровой дисплей (Ракетка) */
         .rocket-display {
             height: 180px;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             background: radial-gradient(circle, #15221B 0%, var(--bg-main) 70%);
             border-radius: 20px;
+            border: 1px solid var(--card-border);
             margin-bottom: 12px;
         }
-    .action-btn:active {
-      transform: scale(0.98);
-    }
 
         .multiplier-val {
             font-size: 54px; font-weight: 900;
             color: var(--accent-mint);
             text-shadow: 0 0 20px rgba(0,230,118,0.4);
+            transition: color 0.1s;
         }
-    /* Последняя выплата */
-    .last-win {
-      margin-top: 15px;
-      background: #161b22;
-      padding: 10px 16px;
-      border-radius: 12px;
-      font-size: 13px;
-      width: 100%;
-      max-width: 400px;
-      display: flex;
-      justify-content: space-between;
-      color: #8b949e;
-    }
 
         .history-capsules {
             display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px;
+            scrollbar-width: none;
         }
+        .history-capsules::-webkit-scrollbar { display: none; }
+
         .capsule {
             padding: 6px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;
             background: var(--card-bg); border: 1px solid var(--card-border);
+            white-space: nowrap;
         }
         .capsule.win { color: var(--accent-mint); border-color: rgba(0,230,118,0.3); }
         .capsule.gold { color: var(--accent-gold); border-color: rgba(255,215,0,0.3); }
+        .capsule.purple { color: #E040FB; border-color: rgba(224,64,251,0.3); }
         .capsule.crash { color: var(--danger-red); border-color: rgba(255,61,87,0.3); }
+
+        /* Ввод ставки */
+        .bet-control-box {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .bet-control-box label {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .bet-input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            outline: none;
+        }
 
         .btn-main-action {
             background: var(--accent-mint);
@@ -305,14 +215,9 @@
             width: 100%;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+            transition: transform 0.1s, background-color 0.2s;
         }
-    .last-win span {
-      color: #00e676;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
+        .btn-main-action:active { transform: scale(0.98); }
 
         /* Игроки внизу */
         .players-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
@@ -320,100 +225,30 @@
             background: var(--card-bg); border: 1px solid var(--card-border);
             padding: 10px 12px; border-radius: 12px;
             display: flex; justify-content: space-between; align-items: center;
-            font-size: 12px;
+            font-size: 13px;
         }
-  <!-- Шапка -->
-  <div class="header">
-    <div class="user-avatar">J</div>
-    <div class="balance">💎 12.50</div>
-    <button class="deposit-btn">Пополнить</button>
-  </div>
 
         /* Нижняя навигация */
         .bottom-nav {
             display: flex; justify-content: space-around;
             background: var(--card-bg);
             border-top: 1px solid var(--card-border);
-            padding: 8px 0 12px;
+            padding: 10px 0 14px;
         }
         .nav-tab {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            color: var(--text-sub); font-size: 10px; cursor: pointer; width: 20%;
-  <!-- История раундов -->
-  <div class="history" id="history">
-    <div class="history-item green">1.69x</div>
-    <div class="history-item green">1.22x</div>
-    <div class="history-item yellow">140.1x</div>
-    <div class="history-item red">1.13x</div>
-  </div>
-
-  <!-- Игровое поле -->
-  <div class="game-screen">
-    <div class="multiplier" id="multiplier">1.00x</div>
-  </div>
-
-  <!-- Главная кнопка -->
-  <button class="action-btn" id="mainBtn">Сделать ставку</button>
-
-  <!-- Плашка снизу -->
-  <div class="last-win">
-    <div>AmiBol</div>
-    <span>+0.30 TON (x1.50)</span>
-  </div>
-
-  <!-- ЛОГИКА ИГРЫ -->
-  <script>
-    let currentMultiplier = 1.00;
-    let gameInterval = null;
-    let isGameRunning = false;
-    let crashPoint = 0;
-
-    const multiplierEl = document.getElementById('multiplier');
-    const mainBtn = document.getElementById('mainBtn');
-    const historyEl = document.getElementById('history');
-
-    mainBtn.addEventListener('click', () => {
-      if (!isGameRunning) {
-        startGame();
-      } else {
-        claimWin();
-      }
-    });
-
-    function startGame() {
-      isGameRunning = true;
-      currentMultiplier = 1.00;
-      
-      // Настройка кнопки на забор
-      mainBtn.innerText = 'Забрать';
-      mainBtn.style.backgroundColor = '#ff9800';
-      mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
-      
-      multiplierEl.style.color = '#00e676';
-      
-      // Точка краша (от 1.05 до 10.00)
-      crashPoint = (Math.random() * 8 + 1.05).toFixed(2);
-
-      // Запуск тиков
-      gameInterval = setInterval(() => {
-        currentMultiplier += 0.02;
-        multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
-
-        if (currentMultiplier >= crashPoint) {
-          crashGame();
+            color: var(--text-sub); font-size: 11px; cursor: pointer; width: 25%;
         }
         .nav-tab.active { color: var(--accent-mint); font-weight: bold; }
     </style>
 </head>
 <body>
-      }, 70);
-    }
 
 <div class="app-container">
     <!-- Шапка -->
     <div class="header">
         <div class="user-info">
-            <div class="avatar">J</div>
+            <div class="avatar" id="avatarName">J</div>
             <div class="balance-box">
                 <span>💎</span> <span id="balance">12.50</span>
             </div>
@@ -430,7 +265,7 @@
             <div class="live-item">⭐ @katya выиграла <b>2.4x</b></div>
         </div>
 
-        <!-- Баннеры игр -->
+        <!-- Баннеры режимов -->
         <div class="banner-card" onclick="switchTab('rocket')">
             <span class="badge-hit">🔥 ХИТ</span>
             <h2 style="margin-top:8px; font-size:24px;">🚀 РАКЕТКА</h2>
@@ -447,117 +282,242 @@
     <!-- 2. РАКЕТКА -->
     <div id="screen-rocket" class="screen">
         <div class="history-capsules" id="historyCapsules">
-            <div class="capsule win">1.69x</div>
-            <div class="capsule win">1.22x</div>
-            <div class="capsule gold">140.1x</div>
-            <div class="capsule crash">1.13x</div>
+            <div class="capsule gold">4.12x</div>
+            <div class="capsule win">1.19x</div>
+            <div class="capsule win">1.08x</div>
+            <div class="capsule crash">1.03x</div>
         </div>
 
         <div class="rocket-display">
             <div class="multiplier-val" id="multiplier">1.00x</div>
         </div>
 
+        <!-- Поле ввода ставки -->
+        <div class="bet-control-box">
+            <label for="betAmount">Ставка:</label>
+            <input type="number" id="betAmount" class="bet-input" value="0.50" step="0.10" min="0.10" max="100.00">
+            <span style="font-size:12px; color:var(--text-sub); font-weight:bold;">TON</span>
+        </div>
+
         <button class="btn-main-action" id="mainBtn">Сделать ставку</button>
 
         <div class="players-list" id="playersList">
-            <div class="player-card">
+            <div class="player-card" id="myBetCard">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="width:24px; height:24px; background:#222; border-radius:50%;"></div>
-                    <b>AmiBol</b>
+                    <div style="width:24px; height:24px; background:#222; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:11px;" id="playerIcon">J</div>
+                    <b id="playerName">@jenyxa</b>
                 </div>
-                <span style="color:var(--accent-mint); font-weight:bold;">+0.30 TON (x1.50)</span>
+                <span style="color:var(--text-sub); font-weight:bold;" id="playerBetStatus">Ожидание ставки</span>
             </div>
         </div>
     </div>
 
     <!-- 3. КЕЙСЫ -->
     <div id="screen-cases" class="screen">
-        <h3>Кейсы</h3>
-        <p style="color:var(--text-sub); font-size:12px;">Выбирай кейс и забирай призы в инвентарь</p>
+        <h3 style="margin-bottom:6px;">📦 EPIC CASES</h3>
+        <p style="color:var(--text-sub); font-size:12px;">Выбирай кейс и забирай NFT, Stars и TON в инвентарь.</p>
     </div>
 
     <!-- 4. ИНВЕНТАРЬ -->
     <div id="screen-inventory" class="screen">
-        <h3>Мой Инвентарь</h3>
+        <h3 style="margin-bottom:6px;">🎒 Мой Инвентарь</h3>
+        <p style="color:var(--text-sub); font-size:12px;">Здесь будут отображаться полученные выигрыши и предметы.</p>
     </div>
 
     <!-- Нижняя навигация -->
     <div class="bottom-nav">
-        <div class="nav-tab active" onclick="switchTab('hub')">
+        <div class="nav-tab active" id="tab-hub" onclick="switchTab('hub')">
             <span style="font-size:18px;">🏠</span> Главная
         </div>
-        <div class="nav-tab" onclick="switchTab('rocket')">
+        <div class="nav-tab" id="tab-rocket" onclick="switchTab('rocket')">
             <span style="font-size:18px;">🚀</span> Ракетка
         </div>
-        <div class="nav-tab" onclick="switchTab('cases')">
+        <div class="nav-tab" id="tab-cases" onclick="switchTab('cases')">
             <span style="font-size:18px;">📦</span> Кейсы
         </div>
-        <div class="nav-tab" onclick="switchTab('inventory')">
+        <div class="nav-tab" id="tab-inventory" onclick="switchTab('inventory')">
             <span style="font-size:18px;">🎒</span> Инвентарь
         </div>
     </div>
 </div>
 
 <script>
+    // Инициализация Telegram WebApp API
     const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
+    let userName = "@jenyxa";
 
+    if (tg) {
+        tg.ready();
+        tg.expand();
+        if (tg.initDataUnsafe?.user?.username) {
+            userName = "@" + tg.initDataUnsafe.user.username;
+            document.getElementById('playerName').innerText = userName;
+            const letter = userName.charAt(1).toUpperCase();
+            document.getElementById('avatarName').innerText = letter;
+            document.getElementById('playerIcon').innerText = letter;
+        }
+    }
+
+    // Переключение вкладок
     function switchTab(tab) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        
         document.getElementById(`screen-${tab}`).classList.add('active');
-    function claimWin() {
-      clearInterval(gameInterval);
-      isGameRunning = false;
-      
-      const winX = currentMultiplier.toFixed(2) + 'x';
-      addHistoryItem(winX, 'green');
-      
-      multiplierEl.innerText = 'ВЫИГРЫШ!';
-      multiplierEl.style.color = '#00e676';
-
-      resetBtn();
-      
-      setTimeout(() => {
-        multiplierEl.innerText = '1.00x';
-      }, 1500);
+        document.getElementById(`tab-${tab}`).classList.add('active');
     }
-</script>
+
+    // Логика быстрой и жёсткой Ракетки
+    let userBalance = 12.50;
+    let currentMultiplier = 1.00;
+    let gameInterval = null;
+    let isGameRunning = false;
+    let crashPoint = 0;
+    let activeBet = 0.50;
+
+    const multiplierEl = document.getElementById('multiplier');
+    const mainBtn = document.getElementById('mainBtn');
+    const historyCapsules = document.getElementById('historyCapsules');
+    const balanceEl = document.getElementById('balance');
+    const betInput = document.getElementById('betAmount');
+    const playerBetStatus = document.getElementById('playerBetStatus');
+
+    mainBtn.addEventListener('click', () => {
+        if (!isGameRunning) {
+            startGame();
+        } else {
+            claimWin();
+        }
+    });
+
+    function startGame() {
+        let betValue = parseFloat(betInput.value);
+        if (isNaN(betValue) || betValue < 0.10) {
+            alert('Минимальная ставка — 0.10 TON');
+            return;
+        }
+        if (betValue > 100.00) {
+            alert('Максимальная ставка — 100.00 TON');
+            return;
+        }
+        if (betValue > userBalance) {
+            alert('Недостаточно баланса!');
+            return;
+        }
+
+        activeBet = betValue;
+        userBalance -= activeBet;
+        balanceEl.innerText = userBalance.toFixed(2);
+
+        isGameRunning = true;
+        currentMultiplier = 1.00;
+        betInput.disabled = true;
+
+        playerBetStatus.innerText = `В игре: ${activeBet.toFixed(2)} TON`;
+        playerBetStatus.style.color = 'var(--accent-gold)';
+
+        mainBtn.innerText = 'Забрать';
+        mainBtn.style.backgroundColor = '#FF9800';
+        mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
+
+        // ЖЁСТКИЙ ПОДКУСТ МАТЕМАТИКИ:
+        // 70% случаев — взрыв на 1.02x - 1.80x
+        // 20% случаев — взрыв на 1.80x - 3.50x
+        // 10% случаев — редкий взлёт до 8.00x
+        let rand = Math.random();
+        if (rand < 0.70) {
+            crashPoint = (1.02 + Math.random() * 0.78).toFixed(2);
+        } else if (rand < 0.90) {
+            crashPoint = (1.80 + Math.random() * 1.70).toFixed(2);
+        } else {
+            crashPoint = (3.50 + Math.random() * 4.50).toFixed(2);
+        }
+
+        // УСКОРЕННЫЙ ТАЙМЕР (30мс шаг 0.05)
+        gameInterval = setInterval(() => {
+            currentMultiplier += 0.05;
+            multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
+
+            if (currentMultiplier < 2.00) {
+                multiplierEl.style.color = 'var(--accent-mint)';
+                multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
+            } else if (currentMultiplier < 5.00) {
+                multiplierEl.style.color = '#FFB300';
+                multiplierEl.style.textShadow = '0 0 20px rgba(255,179,0,0.5)';
+            } else if (currentMultiplier < 10.00) {
+                multiplierEl.style.color = 'var(--accent-gold)';
+                multiplierEl.style.textShadow = '0 0 25px rgba(255,215,0,0.6)';
+            } else {
+                multiplierEl.style.color = '#E040FB';
+                multiplierEl.style.textShadow = '0 0 35px rgba(224,64,251,0.8)';
+            }
+
+            if (currentMultiplier >= crashPoint) {
+                crashGame();
+            }
+        }, 30);
+    }
+
+    function claimWin() {
+        clearInterval(gameInterval);
+        isGameRunning = false;
+        betInput.disabled = false;
+
+        const winX = currentMultiplier.toFixed(2);
+        const winAmount = (activeBet * currentMultiplier).toFixed(2);
+        
+        userBalance += parseFloat(winAmount);
+        balanceEl.innerText = userBalance.toFixed(2);
+
+        playerBetStatus.innerText = `+${winAmount} TON (x${winX})`;
+        playerBetStatus.style.color = 'var(--accent-mint)';
+
+        let capType = 'win';
+        if (currentMultiplier >= 10) capType = 'purple';
+        else if (currentMultiplier >= 5) capType = 'gold';
+
+        addHistoryItem(winX + 'x', capType);
+
+        multiplierEl.innerText = 'ВЫИГРЫШ!';
+        multiplierEl.style.color = 'var(--accent-mint)';
+
+        resetMainBtn();
+    }
 
     function crashGame() {
-      clearInterval(gameInterval);
-      isGameRunning = false;
-      
-      const crashX = crashPoint + 'x';
-      addHistoryItem(crashX, 'red');
+        clearInterval(gameInterval);
+        isGameRunning = false;
+        betInput.disabled = false;
 
-      multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
-      multiplierEl.style.color = '#ff5252';
+        const crashX = crashPoint + 'x';
+        addHistoryItem(crashX, 'crash');
 
-      resetBtn();
+        playerBetStatus.innerText = `0.00 TON (${crashX})`;
+        playerBetStatus.style.color = 'var(--danger-red)';
 
-      setTimeout(() => {
-        multiplierEl.innerText = '1.00x';
-        multiplierEl.style.color = '#00e676';
-      }, 1500);
+        multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
+        multiplierEl.style.color = 'var(--danger-red)';
+
+        resetMainBtn();
+
+        setTimeout(() => {
+            multiplierEl.innerText = '1.00x';
+            multiplierEl.style.color = 'var(--accent-mint)';
+        }, 1500);
     }
 
-    function resetBtn() {
-      mainBtn.innerText = 'Сделать ставку';
-      mainBtn.style.backgroundColor = '#00e676';
-      mainBtn.style.boxShadow = '0 4px 15px rgba(0, 230, 118, 0.3)';
+    function resetMainBtn() {
+        mainBtn.innerText = 'Сделать ставку';
+        mainBtn.style.backgroundColor = 'var(--accent-mint)';
+        mainBtn.style.boxShadow = '0 4px 15px rgba(0, 230, 118, 0.3)';
     }
 
-    function addHistoryItem(val, colorClass) {
-      const newDiv = document.createElement('div');
-      newDiv.className = `history-item ${colorClass}`;
-      newDiv.innerText = val;
-      
-      historyEl.insertBefore(newDiv, historyEl.firstChild);
-      if (historyEl.children.length > 4) {
-        historyEl.removeChild(historyEl.lastChild);
-      }
+    function addHistoryItem(text, type) {
+        const item = document.createElement('div');
+        item.className = `capsule ${type}`;
+        item.innerText = text;
+        historyCapsules.insertBefore(item, historyCapsules.firstChild);
     }
-  </script>
+</script>
 </body>
 </html>
