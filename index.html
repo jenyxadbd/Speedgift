@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speedgift - Ракета</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -25,22 +26,27 @@
             width: 100%;
         }
         .multiplier {
-            font-size: 48px;
+            font-size: 56px;
             font-weight: bold;
             margin-bottom: 20px;
             color: #38bdf8;
+        }
+        .status {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #94a3b8;
         }
         button {
             background: #22c55e;
             color: white;
             border: none;
-            padding: 15px 30px;
+            padding: 16px 30px;
             font-size: 18px;
             font-weight: bold;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
+            transition: background 0.2s;
         }
         button:active {
             transform: scale(0.98);
@@ -48,20 +54,26 @@
         button.cashout {
             background: #eab308;
         }
+        button:disabled {
+            background: #475569;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Rocket Game</h2>
+        <h2>Speedgift Rocket</h2>
         <div class="multiplier" id="multiplier">1.00x</div>
-        <div id="status">Ожидание раунда...</div>
+        <div class="status" id="status">Подключение к серверу...</div>
         <button id="actionBtn">Сделать ставку</button>
     </div>
 
     <script>
-        // Подключение к твоему серверу через актуальный туннель
-        const SERVER_URL = 'https://every-readers-care.loca.lt';
-        
+        // Подключение к актуальному туннелю
+        const SOCKET_URL = 'https://every-readers-care.loca.lt';
+        const socket = io(SOCKET_URL);
+
         const multiplierElem = document.getElementById('multiplier');
         const statusElem = document.getElementById('status');
         const actionBtn = document.getElementById('actionBtn');
@@ -69,20 +81,50 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
+        let gameState = 'waiting'; // waiting, running, crashed
+
+        socket.on('connect', () => {
+            statusElem.innerText = 'Ожидание раунда...';
+        });
+
+        socket.on('disconnect', () => {
+            statusElem.innerText = 'Нет связи с сервером';
+        });
+
+        // Обновление состояния игры от сервера
+        socket.on('game_update', (data) => {
+            gameState = data.state;
+            multiplierElem.innerText = data.multiplier.toFixed(2) + 'x';
+
+            if (data.state === 'waiting') {
+                statusElem.innerText = 'Ожидание начала раунда...';
+                actionBtn.innerText = 'Сделать ставку';
+                actionBtn.className = '';
+                actionBtn.disabled = false;
+            } else if (data.state === 'running') {
+                statusElem.innerText = 'Ракета летит!';
+                actionBtn.innerText = 'Забрать выигрыш';
+                actionBtn.className = 'cashout';
+                actionBtn.disabled = false;
+            } else if (data.state === 'crashed') {
+                statusElem.innerText = 'Краш! Ракета улетела 💥';
+                actionBtn.innerText = 'Раунд завершен';
+                actionBtn.disabled = true;
+            }
+        });
+
         actionBtn.addEventListener('click', () => {
-            fetch(`${SERVER_URL}/api/action`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: tg.initDataUnsafe?.user?.id || 'test_user' })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log('Ответ сервера:', data);
-            })
-            .catch(err => {
-                console.error('Ошибка соединения с сервером:', err);
-                statusElem.innerText = 'Ошибка связи с сервером';
-            });
+            const userId = tg.initDataUnsafe?.user?.id || 'test_user';
+            
+            if (gameState === 'waiting') {
+                socket.fn?.('place_bet', { userId });
+                socket.emit('place_bet', { userId });
+                actionBtn.disabled = true;
+                actionBtn.innerText = 'Ставка принята';
+            } else if (gameState === 'running') {
+                socket.emit('cashout', { userId });
+                actionBtn.disabled = true;
+            }
         });
     </script>
 </body>
