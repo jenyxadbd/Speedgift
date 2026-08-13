@@ -74,6 +74,8 @@
             transition: transform 0.1s linear;
             z-index: 1;
             opacity: 0.8;
+            bottom: 30%;
+            left: 20%;
         }
         .controls {
             width: 100%;
@@ -138,7 +140,7 @@
     <div class="game-container" id="gameContainer">
         <div class="rocket-icon" id="rocketIcon">🚀</div>
         <div class="multiplier" id="multiplier">1.00x</div>
-        <div class="status" id="status">Ожидание старта...</div>
+        <div class="status" id="status">Подключение...</div>
     </div>
 
     <div class="controls">
@@ -162,27 +164,53 @@
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let gameState = 'waiting'; // waiting, running, crashed
+        let gameState = 'WAITING';
         let hasBet = false;
 
-        socket.on('game_update', (data) => {
-            gameState = data.state;
-            multiplierElem.innerText = data.multiplier.toFixed(2) + 'x';
+        // Инициализация при подключении
+        socket.on('init', (data) => {
+            updateGameState(data.state, data.multiplier);
+        });
 
-            // Простая анимация ракеты по графику
-            let progress = Math.min((data.multiplier - 1) * 50, 120);
+        // Обработка смены состояний сервера
+        socket.on('game_state', (data) => {
+            updateGameState(data.state, data.multiplier || '1.00');
+            if (data.state === 'WAITING') {
+                hasBet = false;
+            }
+        });
+
+        // Обновление таймера ожидания
+        socket.on('timer_update', (data) => {
+            if (gameState === 'WAITING') {
+                statusElem.innerText = `Старт через: ${data.timer}с`;
+            }
+        });
+
+        // Полет ракеты и рост множителя
+        socket.on('multiplier_update', (data) => {
+            multiplierElem.innerText = data.multiplier + 'x';
+            
+            // Анимация полета ракеты
+            let multNum = parseFloat(data.multiplier);
+            let progress = Math.min((multNum - 1) * 60, 140);
             rocketIcon.style.transform = `translate(${progress}px, -${progress}px)`;
+        });
 
-            if (data.state === 'waiting') {
-                statusElem.innerText = 'Ожидание игроков...';
-                if (!hasBet) {
-                    actionBtn.innerText = 'Сделать ставку';
-                    actionBtn.className = 'btn btn-bet';
-                    actionBtn.disabled = false;
-                    inputBox.style.display = 'flex';
-                }
-            } else if (data.state === 'running') {
+        function updateGameState(state, mult) {
+            gameState = state;
+            if (mult) multiplierElem.innerText = mult + 'x';
+
+            if (state === 'WAITING') {
+                statusElem.innerText = 'Ожидание ставок...';
+                actionBtn.innerText = 'Сделать ставку';
+                actionBtn.className = 'btn btn-bet';
+                actionBtn.disabled = false;
+                inputBox.style.display = 'flex';
+                rocketIcon.style.transform = 'translate(0px, 0px)';
+            } else if (state === 'FLYING') {
                 statusElem.innerText = 'Ракета летит!';
+                inputBox.style.display = 'none';
                 if (hasBet) {
                     actionBtn.innerText = 'Забрать выигрыш';
                     actionBtn.className = 'btn btn-cashout';
@@ -191,32 +219,36 @@
                     actionBtn.innerText = 'Раунд идет';
                     actionBtn.disabled = true;
                 }
-                inputBox.style.display = 'none';
-            } else if (data.state === 'crashed') {
+            } else if (state === 'CRASHED') {
                 statusElem.innerText = 'Краш! 💥';
                 actionBtn.innerText = 'Улетело';
                 actionBtn.disabled = true;
-                hasBet = false;
-                setTimeout(() => {
-                    inputBox.style.display = 'flex';
-                }, 1500);
+                rocketIcon.style.transform = 'translate(0px, 0px)';
             }
-        });
+        }
 
         actionBtn.addEventListener('click', () => {
-            const userId = tg.initDataUnsafe?.user?.id || 'test_user';
+            const username = tg.initDataUnsafe?.user?.username || 'Player';
+            const amount = parseFloat(betAmountInput.value) || 10;
 
-            if (gameState === 'waiting' && !hasBet) {
-                const amount = parseFloat(betAmountInput.value) || 10;
-                socket.emit('place_bet', { userId, amount });
+            if (gameState === 'WAITING' && !hasBet) {
+                socket.emit('place_bet', { username, amount });
                 hasBet = true;
                 actionBtn.innerText = 'Ставка принята';
                 actionBtn.disabled = true;
-            } else if (gameState === 'running' && hasBet) {
-                socket.emit('cashout', { userId });
+            } else if (gameState === 'FLYING' && hasBet) {
+                socket.emit('claim_win');
                 actionBtn.disabled = true;
             }
+        });
+
+        socket.on('win_claimed', (data) => {
+            actionBtn.innerText = `Выиграно: ${data.winAmount} ⭐️ (${data.winX}x)`;
         });
     </script>
 </body>
 </html>
+
+
+--
+Отправлено из мобильной Яндекс Почты
