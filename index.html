@@ -7,121 +7,212 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             margin: 0;
-            background: #0f172a;
+            padding: 0;
+        }
+        body {
+            background: #090d16;
             color: #fff;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             height: 100vh;
+            height: 100dvh;
+            padding: 20px;
             overflow: hidden;
         }
-        .container {
-            text-align: center;
-            padding: 20px;
-            max-width: 400px;
+        .header {
             width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 16px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
         }
-        .multiplier {
-            font-size: 56px;
-            font-weight: bold;
-            margin-bottom: 20px;
+        .balance {
+            font-size: 16px;
+            font-weight: 600;
             color: #38bdf8;
         }
-        .status {
-            font-size: 18px;
-            margin-bottom: 20px;
-            color: #94a3b8;
-        }
-        button {
-            background: #22c55e;
-            color: white;
-            border: none;
-            padding: 16px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 14px;
-            cursor: pointer;
+        .game-container {
+            position: relative;
             width: 100%;
-            transition: background 0.2s;
+            flex-grow: 1;
+            margin: 15px 0;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #090d16 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
         }
-        button:active {
+        .multiplier {
+            font-size: 52px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            z-index: 2;
+        }
+        .status {
+            font-size: 15px;
+            color: #94a3b8;
+            margin-top: 5px;
+            z-index: 2;
+        }
+        .rocket-icon {
+            font-size: 40px;
+            position: absolute;
+            transition: transform 0.1s linear;
+            z-index: 1;
+            opacity: 0.8;
+        }
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .bet-input-box {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bet-input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            padding: 10px 14px;
+            outline: none;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .btn:active {
             transform: scale(0.98);
         }
-        button.cashout {
-            background: #eab308;
+        .btn-bet {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
         }
-        button:disabled {
-            background: #475569;
-            opacity: 0.7;
+        .btn-cashout {
+            background: linear-gradient(135deg, #eab308, #ca8a04);
+            color: white;
+            box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);
+        }
+        .btn:disabled {
+            background: #334155;
+            color: #64748b;
+            box-shadow: none;
             cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Speedgift Rocket</h2>
+
+    <div class="header">
+        <span>Speedgift Rocket</span>
+        <div class="balance" id="balance">100.00 ⭐️</div>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+        <div class="rocket-icon" id="rocketIcon">🚀</div>
         <div class="multiplier" id="multiplier">1.00x</div>
-        <div class="status" id="status">Подключение к серверу...</div>
-        <button id="actionBtn">Сделать ставку</button>
+        <div class="status" id="status">Ожидание старта...</div>
+    </div>
+
+    <div class="controls">
+        <div class="bet-input-box" id="inputBox">
+            <input type="number" id="betAmount" value="10" min="1" max="1000">
+        </div>
+        <button class="btn btn-bet" id="actionBtn">Сделать ставку</button>
     </div>
 
     <script>
-        // Подключение к актуальному туннелю
         const SOCKET_URL = 'https://every-readers-care.loca.lt';
         const socket = io(SOCKET_URL);
 
         const multiplierElem = document.getElementById('multiplier');
         const statusElem = document.getElementById('status');
         const actionBtn = document.getElementById('actionBtn');
+        const betAmountInput = document.getElementById('betAmount');
+        const inputBox = document.getElementById('inputBox');
+        const rocketIcon = document.getElementById('rocketIcon');
 
         let tg = window.Telegram.WebApp;
         tg.expand();
 
         let gameState = 'waiting'; // waiting, running, crashed
+        let hasBet = false;
 
-        socket.on('connect', () => {
-            statusElem.innerText = 'Ожидание раунда...';
-        });
-
-        socket.on('disconnect', () => {
-            statusElem.innerText = 'Нет связи с сервером';
-        });
-
-        // Обновление состояния игры от сервера
         socket.on('game_update', (data) => {
             gameState = data.state;
             multiplierElem.innerText = data.multiplier.toFixed(2) + 'x';
 
+            // Простая анимация ракеты по графику
+            let progress = Math.min((data.multiplier - 1) * 50, 120);
+            rocketIcon.style.transform = `translate(${progress}px, -${progress}px)`;
+
             if (data.state === 'waiting') {
-                statusElem.innerText = 'Ожидание начала раунда...';
-                actionBtn.innerText = 'Сделать ставку';
-                actionBtn.className = '';
-                actionBtn.disabled = false;
+                statusElem.innerText = 'Ожидание игроков...';
+                if (!hasBet) {
+                    actionBtn.innerText = 'Сделать ставку';
+                    actionBtn.className = 'btn btn-bet';
+                    actionBtn.disabled = false;
+                    inputBox.style.display = 'flex';
+                }
             } else if (data.state === 'running') {
                 statusElem.innerText = 'Ракета летит!';
-                actionBtn.innerText = 'Забрать выигрыш';
-                actionBtn.className = 'cashout';
-                actionBtn.disabled = false;
+                if (hasBet) {
+                    actionBtn.innerText = 'Забрать выигрыш';
+                    actionBtn.className = 'btn btn-cashout';
+                    actionBtn.disabled = false;
+                } else {
+                    actionBtn.innerText = 'Раунд идет';
+                    actionBtn.disabled = true;
+                }
+                inputBox.style.display = 'none';
             } else if (data.state === 'crashed') {
-                statusElem.innerText = 'Краш! Ракета улетела 💥';
-                actionBtn.innerText = 'Раунд завершен';
+                statusElem.innerText = 'Краш! 💥';
+                actionBtn.innerText = 'Улетело';
                 actionBtn.disabled = true;
+                hasBet = false;
+                setTimeout(() => {
+                    inputBox.style.display = 'flex';
+                }, 1500);
             }
         });
 
         actionBtn.addEventListener('click', () => {
             const userId = tg.initDataUnsafe?.user?.id || 'test_user';
-            
-            if (gameState === 'waiting') {
-                socket.fn?.('place_bet', { userId });
-                socket.emit('place_bet', { userId });
-                actionBtn.disabled = true;
+
+            if (gameState === 'waiting' && !hasBet) {
+                const amount = parseFloat(betAmountInput.value) || 10;
+                socket.emit('place_bet', { userId, amount });
+                hasBet = true;
                 actionBtn.innerText = 'Ставка принята';
-            } else if (gameState === 'running') {
+                actionBtn.disabled = true;
+            } else if (gameState === 'running' && hasBet) {
                 socket.emit('cashout', { userId });
                 actionBtn.disabled = true;
             }
