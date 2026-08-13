@@ -63,6 +63,7 @@
             background: linear-gradient(135deg, var(--accent-mint), #00A859);
             display: flex; align-items: center; justify-content: center;
             font-weight: bold; border: 2px solid var(--accent-mint);
+            color: #000;
         }
 
         .balance-box {
@@ -125,11 +126,6 @@
             overflow: hidden;
             cursor: pointer;
         }
-        .banner-card::after {
-            content: ''; position: absolute; right: -20px; bottom: -20px;
-            width: 100px; height: 100px;
-            background: radial-gradient(circle, rgba(0,230,118,0.15) 0%, rgba(0,0,0,0) 70%);
-        }
 
         .badge-hit {
             background: rgba(0,230,118,0.2);
@@ -167,6 +163,34 @@
         .capsule.purple { color: #E040FB; border-color: rgba(224,64,251,0.3); }
         .capsule.crash { color: var(--danger-red); border-color: rgba(255,61,87,0.3); }
 
+        /* Блок выбора ставки */
+        .bet-control-box {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 6px 12px;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .bet-control-box label {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 600;
+        }
+
+        .bet-input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            outline: none;
+        }
+
         .btn-main-action {
             background: var(--accent-mint);
             color: #000;
@@ -183,7 +207,7 @@
         .btn-main-action:active { transform: scale(0.98); }
 
         /* Игроки внизу */
-        .players-list { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .players-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
         .player-card {
             background: var(--card-bg); border: 1px solid var(--card-border);
             padding: 10px 12px; border-radius: 12px;
@@ -211,7 +235,7 @@
     <!-- Шапка -->
     <div class="header">
         <div class="user-info">
-            <div class="avatar">J</div>
+            <div class="avatar" id="avatarName">J</div>
             <div class="balance-box">
                 <span>💎</span> <span id="balance">12.50</span>
             </div>
@@ -255,15 +279,23 @@
             <div class="multiplier-val" id="multiplier">1.00x</div>
         </div>
 
+        <!-- Поле ввода ставки -->
+        <div class="bet-control-box">
+            <label for="betAmount">Ставка:</label>
+            <input type="number" id="betAmount" class="bet-input" value="0.50" step="0.10" min="0.10" max="100.00">
+            <span style="font-size:12px; color:var(--text-sub); font-weight:bold;">TON</span>
+        </div>
+
         <button class="btn-main-action" id="mainBtn">Сделать ставку</button>
 
+        <!-- Ставка игрока внизу -->
         <div class="players-list" id="playersList">
-            <div class="player-card">
+            <div class="player-card" id="myBetCard">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="width:24px; height:24px; background:#222; border-radius:50%;"></div>
-                    <b>AmiBol</b>
+                    <div style="width:24px; height:24px; background:#222; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;" id="playerIcon">J</div>
+                    <b id="playerName">@jenyxa</b>
                 </div>
-                <span style="color:var(--accent-mint); font-weight:bold;">+0.30 TON (x1.50)</span>
+                <span style="color:var(--text-sub); font-weight:bold;" id="playerBetStatus">Ожидание ставки</span>
             </div>
         </div>
     </div>
@@ -297,9 +329,20 @@
 </div>
 
 <script>
-    // Подключение Telegram Mini App SDK
+    // Инициализация Telegram WebApp
     const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
+    let userName = "@jenyxa";
+
+    if (tg) { 
+        tg.ready(); 
+        tg.expand(); 
+        if (tg.initDataUnsafe?.user?.username) {
+            userName = "@" + tg.initDataUnsafe.user.username;
+            document.getElementById('playerName').innerText = userName;
+            document.getElementById('avatarName').innerText = userName.charAt(1).toUpperCase();
+            document.getElementById('playerIcon').innerText = userName.charAt(1).toUpperCase();
+        }
+    }
 
     // Переключение вкладок
     function switchTab(tab) {
@@ -311,15 +354,20 @@
         if(activeNavTab) activeNavTab.classList.add('active');
     }
 
-    // --- ЛОГИКА РАКЕТКИ С ПЛАВНОЙ СМЕНОЙ ЦВЕТА ---
+    // --- ЛОГИКА РАКЕТКИ С ВВОДОМ СТАВКИ ---
+    let userBalance = 12.50;
     let currentMultiplier = 1.00;
     let gameInterval = null;
     let isGameRunning = false;
     let crashPoint = 0;
+    let activeBet = 0.50;
 
     const multiplierEl = document.getElementById('multiplier');
     const mainBtn = document.getElementById('mainBtn');
     const historyCapsules = document.getElementById('historyCapsules');
+    const balanceEl = document.getElementById('balance');
+    const betInput = document.getElementById('betAmount');
+    const playerBetStatus = document.getElementById('playerBetStatus');
 
     mainBtn.addEventListener('click', () => {
         if (!isGameRunning) {
@@ -330,33 +378,56 @@
     });
 
     function startGame() {
+        // Чтение и валидация суммы ставки
+        let betValue = parseFloat(betInput.value);
+        if (isNaN(betValue) || betValue < 0.10) {
+            alert('Минимальная ставка — 0.10 TON');
+            return;
+        }
+        if (betValue > 100.00) {
+            alert('Максимальная ставка — 100.00 TON');
+            return;
+        }
+        if (betValue > userBalance) {
+            alert('Недостаточно баланса!');
+            return;
+        }
+
+        activeBet = betValue;
+        userBalance -= activeBet;
+        balanceEl.innerText = userBalance.toFixed(2);
+
         isGameRunning = true;
         currentMultiplier = 1.00;
+        betInput.disabled = true; // Запрещаем изменять ставку во время игры
         
+        // Отображение ставки внизу
+        playerBetStatus.innerText = `В игре: ${activeBet.toFixed(2)} TON`;
+        playerBetStatus.style.color = 'var(--accent-gold)';
+
         // Меняем кнопку на "Забрать"
         mainBtn.innerText = 'Забрать';
         mainBtn.style.backgroundColor = '#FF9800';
         mainBtn.style.boxShadow = '0 4px 15px rgba(255, 152, 0, 0.4)';
         
-        // Рандомная точка взрыва от 1.05x до 15.00x
         crashPoint = (Math.random() * 14 + 1.05).toFixed(2);
 
         gameInterval = setInterval(() => {
             currentMultiplier += 0.03;
             multiplierEl.innerText = currentMultiplier.toFixed(2) + 'x';
 
-            // Градиентная смена цвета в зависимости от коэффициента
+            // Обновление цвета
             if (currentMultiplier < 2.00) {
-                multiplierEl.style.color = 'var(--accent-mint)'; // Мятный
+                multiplierEl.style.color = 'var(--accent-mint)';
                 multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
             } else if (currentMultiplier < 5.00) {
-                multiplierEl.style.color = '#FFB300'; // Оранжевый
+                multiplierEl.style.color = '#FFB300';
                 multiplierEl.style.textShadow = '0 0 20px rgba(255,179,0,0.5)';
             } else if (currentMultiplier < 10.00) {
-                multiplierEl.style.color = 'var(--accent-gold)'; // Золотой
+                multiplierEl.style.color = 'var(--accent-gold)';
                 multiplierEl.style.textShadow = '0 0 25px rgba(255,215,0,0.6)';
             } else {
-                multiplierEl.style.color = '#E040FB'; // Неоновый Фиолетовый
+                multiplierEl.style.color = '#E040FB';
                 multiplierEl.style.textShadow = '0 0 35px rgba(224,64,251,0.8)';
             }
 
@@ -369,18 +440,27 @@
     function claimWin() {
         clearInterval(gameInterval);
         isGameRunning = false;
+        betInput.disabled = false;
         
-        const winX = currentMultiplier.toFixed(2) + 'x';
+        const winX = currentMultiplier.toFixed(2);
+        const winAmount = (activeBet * currentMultiplier).toFixed(2);
+        
+        // Пополнение баланса
+        userBalance += parseFloat(winAmount);
+        balanceEl.innerText = userBalance.toFixed(2);
+
+        // Обновление статуса в плашке внизу
+        playerBetStatus.innerText = `+${winAmount} TON (x${winX})`;
+        playerBetStatus.style.color = 'var(--accent-mint)';
         
         let capType = 'win';
         if (currentMultiplier >= 10) capType = 'purple';
         else if (currentMultiplier >= 5) capType = 'gold';
 
-        addHistoryItem(winX, capType);
+        addHistoryItem(winX + 'x', capType);
         
         multiplierEl.innerText = 'ВЫИГРЫШ!';
         multiplierEl.style.color = 'var(--accent-mint)';
-        multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
 
         resetMainBtn();
         
@@ -392,20 +472,23 @@
     function crashGame() {
         clearInterval(gameInterval);
         isGameRunning = false;
+        betInput.disabled = false;
         
         const crashX = crashPoint + 'x';
         addHistoryItem(crashX, 'crash');
 
+        // Потеря ставки
+        playerBetStatus.innerText = `0.00 TON (${crashX})`;
+        playerBetStatus.style.color = 'var(--danger-red)';
+
         multiplierEl.innerText = 'ВЗЛЕТЕЛА!';
         multiplierEl.style.color = 'var(--danger-red)';
-        multiplierEl.style.textShadow = '0 0 20px rgba(255,61,87,0.5)';
 
         resetMainBtn();
 
         setTimeout(() => {
             multiplierEl.innerText = '1.00x';
             multiplierEl.style.color = 'var(--accent-mint)';
-            multiplierEl.style.textShadow = '0 0 20px rgba(0,230,118,0.4)';
         }, 1500);
     }
 
